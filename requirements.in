@@ -1,0 +1,12 @@
+torch
+torchvision
+torchaudio
+setuptools
+--extra-index-url https://download.pytorch.org/whl/cu126
+
+numpy
+scipy
+matplotlib
+tqdm
+scikit-learn
+pandas

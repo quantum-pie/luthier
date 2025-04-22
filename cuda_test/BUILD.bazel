@@ -1,0 +1,14 @@
+py_binary(
+    name = "test_cuda",
+    srcs = ["cuda_test.py"],
+    main = "cuda_test.py",
+    deps = [
+        "@pypi//torch",
+        "@pypi//torchvision",
+        "@pypi//torchaudio",
+    ],
+    data = ["//third_party/pytorch_cuda_libs:cuda_so_files"],
+    env = {
+        "LD_LIBRARY_PATH": "third_party/pytorch_cuda_libs/lib",
+    },
+)

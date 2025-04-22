@@ -1,0 +1,1 @@
+`bazel run //:requirements_lock.update`
