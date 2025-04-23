@@ -10,3 +10,7 @@ matplotlib
 tqdm
 scikit-learn
 pandas
+pretty-midi
+tables
+pytest
+click
