@@ -4,7 +4,6 @@ Script to collect all CUDA .so files from PyTorch's vendorized nvidia wheels
 installed via rules_python/pip_install, and generate a BUILD.bazel file
 for Bazel integration.
 """
-import os
 import shutil
 import re
 from pathlib import Path
@@ -61,7 +60,6 @@ def generate_temp_target(packages):
     subprocess.run(["bazel", "build", f"//{TEMP_WORKSPACE_DIR.name}:force_cuda_unpack"], check=True)
 
 # Use bazel cquery to find real .so files on disk
-
 def collect_so_files_from_packages(_):
     print("Querying Bazel for .so file paths via cquery...")
     result = subprocess.run(
@@ -82,7 +80,6 @@ def collect_so_files_from_packages(_):
     so_pattern = re.compile(r".*\.so(\.\d+)*$")
 
     seen = set()
-
     for line in result.stdout.splitlines():
         rel_path = Path(line)
         abs_path = output_base / rel_path
