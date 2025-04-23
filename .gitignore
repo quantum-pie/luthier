@@ -3,3 +3,4 @@ bazel-Luthier
 bazel-out
 bazel-testlogs
 third_party
+.bazelrc.local

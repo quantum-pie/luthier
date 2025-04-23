@@ -1,0 +1,21 @@
+
+py_library(
+    name = "loader",
+    srcs = ["loader.py"],
+    deps = [
+        "@pypi//tables",
+    ],
+)
+
+py_binary(
+    name = "test_loader",
+    srcs = [
+        "test_loader.py", 
+        "hdf5_getters.py",
+    ],
+    main = "test_loader.py",
+    deps = [
+        ":loader",
+        "@pypi//click",
+    ],
+)
