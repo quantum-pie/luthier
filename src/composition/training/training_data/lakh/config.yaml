@@ -1,0 +1,4 @@
+lakh_loader:
+  min_match_score: 0.5
+  min_cluster_size: 10
+  min_cluster_score: 2.0
