@@ -328,7 +328,7 @@
         "bzlTransitiveDigest": "w9qbx9gy25U04n5Tfmetw5ONAylCOEsMTo5DeljQ2GQ=",
         "usagesDigest": "XTKCEeqNsAnues6kx8GL80ifTLnMVyvz2ivKFspE6aE=",
         "recordedFileInputs": {
-          "@@//requirements_lock.txt": "acbca4e3a3e073bd0b058b0bdf0593c3e30dd1388cfecbceaa843cd6d235ab0d",
+          "@@//requirements_lock.txt": "3334000c8e89bae4fcf3273a7b042296013b337b10a28c44f9978b9157e81d88",
           "@@protobuf+//python/requirements.txt": "983be60d3cec4b319dcab6d48aeb3f5b2f7c3350f26b3a9e97486c37967c73c5",
           "@@rules_fuzzing+//fuzzing/requirements.txt": "ab04664be026b632a0d2a2446c4f65982b7654f5b6851d2f9d399a19b7242a5b",
           "@@rules_python+//tools/publish/requirements_darwin.txt": "095d4a4f3d639dce831cd493367631cd51b53665292ab20194bac2c0c6458fa8",
@@ -548,6 +548,19 @@
               "requirement": "fsspec==2025.3.2 --hash=sha256:2daf8dc3d1dfa65b6aa37748d112773a7a08416f6c70d96b264c96476ecaf711 --hash=sha256:e52c77ef398680bbd6a98c0e628fbc469491282981209907bbc8aea76a04fdc6"
             }
           },
+          "pypi_313_hdbscan": {
+            "repoRuleId": "@@rules_python+//python/private/pypi:whl_library.bzl%whl_library",
+            "attributes": {
+              "dep_template": "@pypi//{name}:{target}",
+              "extra_pip_args": [
+                "--extra-index-url",
+                "https://download.pytorch.org/whl/cu126"
+              ],
+              "python_interpreter_target": "@@rules_python++python+python_3_13_host//:python",
+              "repo": "pypi_313",
+              "requirement": "hdbscan==0.8.40 --hash=sha256:05668ae7a17479a9061676290a66a810a62f2a4ec577ba18f561088b726ab01d --hash=sha256:127cbe8c858dc77adfde33a3e1ce4f3bea810f78b01d2bd47b1147d4b5a50472 --hash=sha256:1b55a935ed7b329adac52072e1c4028979dfc54312ca08de2deece9c97d6ebb1 --hash=sha256:353eaa22e42bee69df095744dbb8b29360e516bd9dcb84580dceeeb755f004cc --hash=sha256:56d3057d483d112ff8e0f0a49f0d59df8c078d444dbd5dea7b987faab0c6fb49 --hash=sha256:5e958f0d7a33cd2b5e8e927b47f7360bf8a3e7d72355dd65a701e8aabe407b27 --hash=sha256:6e0d6197ee045b173e1f16e6884386f335a56091e373a839dd24f7331a8fa9ed --hash=sha256:7ebe69a0ad2f86d090a518b17d4635dfc65d3402b8c453aa2942f9c7dc895b9e --hash=sha256:811a248e57353a4aa815019176879fd16bace55ed633583a6b47734edcb5397c --hash=sha256:9ba82e510508921e0b30a234b639f5d84a7d475746e7db814517c5c4d1589016 --hash=sha256:c18947947af7f843f47c0111f21ffd5a5fd31789fcae39689a44e8b01433e504 --hash=sha256:c5a16f38e1816ab69ad315a1eab429e5a7c725210d88e71d273496cce3a2693c --hash=sha256:c9e383ff17beee0591075ff65d524bda5b5a35dfb01d218245a7ba30c8d48a17 --hash=sha256:cda06a6f4e65c6c34bed083bb8cdf29fdb1ffcb15580829d79b2906c7bdc6dbc --hash=sha256:cf094aeea4df4513644333b9dda408ef8ef385d0ab5f3f8681e239a9008cbeb5"
+            }
+          },
           "pypi_313_idna": {
             "repoRuleId": "@@rules_python+//python/private/pypi:whl_library.bzl%whl_library",
             "attributes": {
@@ -611,6 +624,19 @@
               "python_interpreter_target": "@@rules_python++python+python_3_13_host//:python",
               "repo": "pypi_313",
               "requirement": "kiwisolver==1.4.8 --hash=sha256:01c3d31902c7db5fb6182832713d3b4122ad9317c2c5877d0539227d96bb2e50 --hash=sha256:034d2c891f76bd3edbdb3ea11140d8510dca675443da7304205a2eaa45d8334c --hash=sha256:085940635c62697391baafaaeabdf3dd7a6c3643577dde337f4d66eba021b2b8 --hash=sha256:08e77738ed7538f036cd1170cbed942ef749137b1311fa2bbe2a7fda2f6bf3cc --hash=sha256:111793b232842991be367ed828076b03d96202c19221b5ebab421ce8bcad016f --hash=sha256:11e1022b524bd48ae56c9b4f9296bce77e15a2e42a502cceba602f804b32bb79 --hash=sha256:151dffc4865e5fe6dafce5480fab84f950d14566c480c08a53c663a0020504b6 --hash=sha256:16523b40aab60426ffdebe33ac374457cf62863e330a90a0383639ce14bf44b2 --hash=sha256:1732e065704b47c9afca7ffa272f845300a4eb959276bf6970dc07265e73b605 --hash=sha256:1c8ceb754339793c24aee1c9fb2485b5b1f5bb1c2c214ff13368431e51fc9a09 --hash=sha256:23454ff084b07ac54ca8be535f4174170c1094a4cff78fbae4f73a4bcc0d4dab --hash=sha256:23d5f023bdc8c7e54eb65f03ca5d5bb25b601eac4d7f1a042888a1f45237987e --hash=sha256:257af1622860e51b1a9d0ce387bf5c2c4f36a90594cb9514f55b074bcc787cfc --hash=sha256:286b18e86682fd2217a48fc6be6b0f20c1d0ed10958d8dc53453ad58d7be0bf8 --hash=sha256:291331973c64bb9cce50bbe871fb2e675c4331dab4f31abe89f175ad7679a4d7 --hash=sha256:2f0121b07b356a22fb0414cec4666bbe36fd6d0d759db3d37228f496ed67c880 --hash=sha256:3452046c37c7692bd52b0e752b87954ef86ee2224e624ef7ce6cb21e8c41cc1b --hash=sha256:34d142fba9c464bc3bbfeff15c96eab0e7310343d6aefb62a79d51421fcc5f1b --hash=sha256:369b75d40abedc1da2c1f4de13f3482cb99e3237b38726710f4a793432b1c5ff --hash=sha256:36dbbfd34838500a31f52c9786990d00150860e46cd5041386f217101350f0d3 --hash=sha256:370fd2df41660ed4e26b8c9d6bbcad668fbe2560462cba151a721d49e5b6628c --hash=sha256:3a96c0e790ee875d65e340ab383700e2b4891677b7fcd30a699146f9384a2bb0 --hash=sha256:3b9b4d2892fefc886f30301cdd80debd8bb01ecdf165a449eb6e78f79f0fabd6 --hash=sha256:3cd3bc628b25f74aedc6d374d5babf0166a92ff1317f46267f12d2ed54bc1d30 --hash=sha256:3ddc373e0eef45b59197de815b1b28ef89ae3955e7722cc9710fb91cd77b7f47 --hash=sha256:4191ee8dfd0be1c3666ccbac178c5a05d5f8d689bbe3fc92f3c4abec817f8fe0 --hash=sha256:54a62808ac74b5e55a04a408cda6156f986cefbcf0ada13572696b507cc92fa1 --hash=sha256:577facaa411c10421314598b50413aa1ebcf5126f704f1e5d72d7e4e9f020d90 --hash=sha256:641f2ddf9358c80faa22e22eb4c9f54bd3f0e442e038728f500e3b978d00aa7d --hash=sha256:65ea09a5a3faadd59c2ce96dc7bf0f364986a315949dc6374f04396b0d60e09b --hash=sha256:68269e60ee4929893aad82666821aaacbd455284124817af45c11e50a4b42e3c --hash=sha256:69b5637c3f316cab1ec1c9a12b8c5f4750a4c4b71af9157645bf32830e39c03a --hash=sha256:7506488470f41169b86d8c9aeff587293f530a23a23a49d6bc64dab66bedc71e --hash=sha256:768cade2c2df13db52475bd28d3a3fac8c9eff04b0e9e2fda0f3760f20b3f7fc --hash=sha256:77e6f57a20b9bd4e1e2cedda4d0b986ebd0216236f0106e55c28aea3d3d69b16 --hash=sha256:782bb86f245ec18009890e7cb8d13a5ef54dcf2ebe18ed65f795e635a96a1c6a --hash=sha256:7a3ad337add5148cf51ce0b55642dc551c0b9d6248458a757f98796ca7348712 --hash=sha256:7cd2785b9391f2873ad46088ed7599a6a71e762e1ea33e87514b1a441ed1da1c --hash=sha256:7e9a60b50fe8b2ec6f448fe8d81b07e40141bfced7f896309df271a0b92f80f3 --hash=sha256:84a2f830d42707de1d191b9490ac186bf7997a9495d4e9072210a1296345f7dc --hash=sha256:856b269c4d28a5c0d5e6c1955ec36ebfd1651ac00e1ce0afa3e28da95293b561 --hash=sha256:858416b7fb777a53f0c59ca08190ce24e9abbd3cffa18886a5781b8e3e26f65d --hash=sha256:87b287251ad6488e95b4f0b4a79a6d04d3ea35fde6340eb38fbd1ca9cd35bbbc --hash=sha256:88c6f252f6816a73b1f8c904f7bbe02fd67c09a69f7cb8a0eecdbf5ce78e63db --hash=sha256:893f5525bb92d3d735878ec00f781b2de998333659507d29ea4466208df37bed --hash=sha256:89c107041f7b27844179ea9c85d6da275aa55ecf28413e87624d033cf1f6b751 --hash=sha256:918139571133f366e8362fa4a297aeba86c7816b7ecf0bc79168080e2bd79957 --hash=sha256:99cea8b9dd34ff80c521aef46a1dddb0dcc0283cf18bde6d756f1e6f31772165 --hash=sha256:a17b7c4f5b2c51bb68ed379defd608a03954a1845dfed7cc0117f1cc8a9b7fd2 --hash=sha256:a3c44cb68861de93f0c4a8175fbaa691f0aa22550c331fefef02b618a9dcb476 --hash=sha256:a4d3601908c560bdf880f07d94f31d734afd1bb71e96585cace0e38ef44c6d84 --hash=sha256:a5ce1e481a74b44dd5e92ff03ea0cb371ae7a0268318e202be06c8f04f4f1246 --hash=sha256:a66f60f8d0c87ab7f59b6fb80e642ebb29fec354a4dfad687ca4092ae69d04f4 --hash=sha256:b21dbe165081142b1232a240fc6383fd32cdd877ca6cc89eab93e5f5883e1c25 --hash=sha256:b47a465040146981dc9db8647981b8cb96366fbc8d452b031e4f8fdffec3f26d --hash=sha256:b5773efa2be9eb9fcf5415ea3ab70fc785d598729fd6057bea38d539ead28271 --hash=sha256:b83dc6769ddbc57613280118fb4ce3cd08899cc3369f7d0e0fab518a7cf37fdb --hash=sha256:bade438f86e21d91e0cf5dd7c0ed00cda0f77c8c1616bd83f9fc157fa6760d31 --hash=sha256:bcb1ebc3547619c3b58a39e2448af089ea2ef44b37988caf432447374941574e --hash=sha256:be4816dc51c8a471749d664161b434912eee82f2ea66bd7628bd14583a833e85 --hash=sha256:c07b29089b7ba090b6f1a669f1411f27221c3662b3a1b7010e67b59bb5a6f10b --hash=sha256:c2b9a96e0f326205af81a15718a9073328df1173a2619a68553decb7097fd5d7 --hash=sha256:c5020c83e8553f770cb3b5fc13faac40f17e0b205bd237aebd21d53d733adb03 --hash=sha256:c72941acb7b67138f35b879bbe85be0f6c6a70cab78fe3ef6db9c024d9223e5b --hash=sha256:c8bf637892dc6e6aad2bc6d4d69d08764166e5e3f69d469e55427b6ac001b19d --hash=sha256:cc978a80a0db3a66d25767b03688f1147a69e6237175c0f4ffffaaedf744055a --hash=sha256:ce2cf1e5688edcb727fdf7cd1bbd0b6416758996826a8be1d958f91880d0809d --hash=sha256:d47b28d1dfe0793d5e96bce90835e17edf9a499b53969b03c6c47ea5985844c3 --hash=sha256:d47cfb2650f0e103d4bf68b0b5804c68da97272c84bb12850d877a95c056bd67 --hash=sha256:d5536185fce131780ebd809f8e623bf4030ce1b161353166c49a3c74c287897f --hash=sha256:d561d2d8883e0819445cfe58d7ddd673e4015c3c57261d7bdcd3710d0d14005c --hash=sha256:d6af5e8815fd02997cb6ad9bbed0ee1e60014438ee1a5c2444c96f87b8843502 --hash=sha256:d6d6bd87df62c27d4185de7c511c6248040afae67028a8a22012b010bc7ad062 --hash=sha256:dace81d28c787956bfbfbbfd72fdcef014f37d9b48830829e488fdb32b49d954 --hash=sha256:e063ef9f89885a1d68dd8b2e18f5ead48653176d10a0e324e3b0030e3a69adeb --hash=sha256:e7a019419b7b510f0f7c9dceff8c5eae2392037eae483a7f9162625233802b0a --hash=sha256:eaa973f1e05131de5ff3569bbba7f5fd07ea0595d3870ed4a526d486fe57fa1b --hash=sha256:eb158fe28ca0c29f2260cca8c43005329ad58452c36f0edf298204de32a9a3ed --hash=sha256:ed33ca2002a779a2e20eeb06aea7721b6e47f2d4b8a8ece979d8ba9e2a167e34 --hash=sha256:fc2ace710ba7c1dfd1a3b42530b62b9ceed115f19a1656adefce7b1782a37794"
+            }
+          },
+          "pypi_313_llvmlite": {
+            "repoRuleId": "@@rules_python+//python/private/pypi:whl_library.bzl%whl_library",
+            "attributes": {
+              "dep_template": "@pypi//{name}:{target}",
+              "extra_pip_args": [
+                "--extra-index-url",
+                "https://download.pytorch.org/whl/cu126"
+              ],
+              "python_interpreter_target": "@@rules_python++python+python_3_13_host//:python",
+              "repo": "pypi_313",
+              "requirement": "llvmlite==0.44.0 --hash=sha256:07667d66a5d150abed9157ab6c0b9393c9356f229784a4385c02f99e94fc94d4 --hash=sha256:1d671a56acf725bf1b531d5ef76b86660a5ab8ef19bb6a46064a705c6ca80aad --hash=sha256:2fb7c4f2fb86cbae6dca3db9ab203eeea0e22d73b99bc2341cdf9de93612e930 --hash=sha256:319bddd44e5f71ae2689859b7203080716448a3cd1128fb144fe5c055219d516 --hash=sha256:40526fb5e313d7b96bda4cbb2c85cd5374e04d80732dd36a282d72a560bb6408 --hash=sha256:41e3839150db4330e1b2716c0be3b5c4672525b4c9005e17c7597f835f351ce2 --hash=sha256:46224058b13c96af1365290bdfebe9a6264ae62fb79b2b55693deed11657a8bf --hash=sha256:5f79a728e0435493611c9f405168682bb75ffd1fbe6fc360733b850c80a026db --hash=sha256:7202b678cdf904823c764ee0fe2dfe38a76981f4c1e51715b4cb5abb6cf1d9e8 --hash=sha256:9c58867118bad04a0bb22a2e0068c693719658105e40009ffe95c7000fcde88e --hash=sha256:9fbadbfba8422123bab5535b293da1cf72f9f478a65645ecd73e781f962ca614 --hash=sha256:aa0097052c32bf721a4efc03bd109d335dfa57d9bffb3d4c24cc680711b8b4fc --hash=sha256:ace564d9fa44bb91eb6e6d8e7754977783c68e90a471ea7ce913bff30bd62427 --hash=sha256:c0143a5ef336da14deaa8ec26c5449ad5b6a2b564df82fcef4be040b9cacfea9 --hash=sha256:c5d22c3bfc842668168a786af4205ec8e3ad29fb1bc03fd11fd48460d0df64c1 --hash=sha256:cccf8eb28f24840f2689fb1a45f9c0f7e582dd24e088dcf96e424834af11f791 --hash=sha256:d752f89e31b66db6f8da06df8b39f9b91e78c5feea1bf9e8c1fba1d1c24c065d --hash=sha256:d8489634d43c20cd0ad71330dde1d5bc7b9966937a263ff1ec1cebb90dc50955 --hash=sha256:eae7e2d4ca8f88f89d315b48c6b741dcb925d6a1042da694aa16ab3dd4cbd3a1 --hash=sha256:eed7d5f29136bda63b6d7804c279e2b72e08c952b7c5df61f45db408e0ee52f3 --hash=sha256:f01a394e9c9b7b1d4e63c327b096d10f6f0ed149ef53d38a09b3749dcf8c9610"
             }
           },
           "pypi_313_markupsafe": {
@@ -702,6 +728,19 @@
               "python_interpreter_target": "@@rules_python++python+python_3_13_host//:python",
               "repo": "pypi_313",
               "requirement": "networkx==3.4.2 --hash=sha256:307c3669428c5362aab27c8a1260aa8f47c4e91d3891f48be0141738d8d053e1 --hash=sha256:df5d4365b724cf81b8c6a7312509d0c22386097011ad1abe274afd5e9d3bbc5f"
+            }
+          },
+          "pypi_313_numba": {
+            "repoRuleId": "@@rules_python+//python/private/pypi:whl_library.bzl%whl_library",
+            "attributes": {
+              "dep_template": "@pypi//{name}:{target}",
+              "extra_pip_args": [
+                "--extra-index-url",
+                "https://download.pytorch.org/whl/cu126"
+              ],
+              "python_interpreter_target": "@@rules_python++python+python_3_13_host//:python",
+              "repo": "pypi_313",
+              "requirement": "numba==0.61.2 --hash=sha256:34fba9406078bac7ab052efbf0d13939426c753ad72946baaa5bf9ae0ebb8dd2 --hash=sha256:3945615cd73c2c7eba2a85ccc9c1730c21cd3958bfcf5a44302abae0fb07bb60 --hash=sha256:3a10a8fc9afac40b1eac55717cece1b8b1ac0b946f5065c89e00bde646b5b154 --hash=sha256:48a53a3de8f8793526cbe330f2a39fe9a6638efcbf11bd63f3d2f9757ae345cd --hash=sha256:49c980e4171948ffebf6b9a2520ea81feed113c1f4890747ba7f59e74be84b1b --hash=sha256:4ddce10009bc097b080fc96876d14c051cc0c7679e99de3e0af59014dab7dfe8 --hash=sha256:59321215e2e0ac5fa928a8020ab00b8e57cda8a97384963ac0dfa4d4e6aa54e7 --hash=sha256:5b1bb509d01f23d70325d3a5a0e237cbc9544dd50e50588bc581ba860c213546 --hash=sha256:5f154aaea625fb32cfbe3b80c5456d514d416fcdf79733dd69c0df3a11348e9e --hash=sha256:76bcec9f46259cedf888041b9886e257ae101c6268261b19fda8cfbc52bec9d1 --hash=sha256:7d3bcada3c9afba3bed413fba45845f2fb9cd0d2b27dd58a1be90257e293d140 --hash=sha256:8750ee147940a6637b80ecf7f95062185ad8726c8c28a2295b8ec1160a196f7d --hash=sha256:97cf4f12c728cf77c9c1d7c23707e4d8fb4632b46275f8f3397de33e5877af18 --hash=sha256:ae45830b129c6137294093b269ef0a22998ccc27bf7cf096ab8dcf7bca8946f9 --hash=sha256:ae8c7a522c26215d5f62ebec436e3d341f7f590079245a2f1008dfd498cc1642 --hash=sha256:bbfdf4eca202cebade0b7d43896978e146f39398909a42941c9303f82f403a18 --hash=sha256:bd1e74609855aa43661edffca37346e4e8462f6903889917e9f41db40907daa2 --hash=sha256:bdbca73ad81fa196bd53dc12e3aaf1564ae036e0c125f237c7644fe64a4928ab --hash=sha256:cf9f9fc00d6eca0c23fc840817ce9f439b9f03c8f03d6246c0e7f0cb15b7162a --hash=sha256:ea0247617edcb5dd61f6106a56255baab031acc4257bddaeddb3a1003b4ca3fd --hash=sha256:efd3db391df53aaa5cfbee189b6c910a5b471488749fd6606c3f33fc984c2ae2"
             }
           },
           "pypi_313_numexpr": {
@@ -990,6 +1029,19 @@
               "requirement": "py-cpuinfo==9.0.0 --hash=sha256:3cdbbf3fac90dc6f118bfd64384f309edeadd902d7c8fb17f02ffa1fc3f49690 --hash=sha256:859625bc251f64e21f077d099d4162689c762b5d6a4c3c97553d56241c9674d5"
             }
           },
+          "pypi_313_pynndescent": {
+            "repoRuleId": "@@rules_python+//python/private/pypi:whl_library.bzl%whl_library",
+            "attributes": {
+              "dep_template": "@pypi//{name}:{target}",
+              "extra_pip_args": [
+                "--extra-index-url",
+                "https://download.pytorch.org/whl/cu126"
+              ],
+              "python_interpreter_target": "@@rules_python++python+python_3_13_host//:python",
+              "repo": "pypi_313",
+              "requirement": "pynndescent==0.5.13 --hash=sha256:69aabb8f394bc631b6ac475a1c7f3994c54adf3f51cd63b2730fefba5771b949 --hash=sha256:d74254c0ee0a1eeec84597d5fe89fedcf778593eeabe32c2f97412934a9800fb"
+            }
+          },
           "pypi_313_pyparsing": {
             "repoRuleId": "@@rules_python+//python/private/pypi:whl_library.bzl%whl_library",
             "attributes": {
@@ -1040,6 +1092,19 @@
               "python_interpreter_target": "@@rules_python++python+python_3_13_host//:python",
               "repo": "pypi_313",
               "requirement": "pytz==2025.2 --hash=sha256:360b9e3dbb49a209c21ad61809c7fb453643e048b38924c765813546746e81c3 --hash=sha256:5ddf76296dd8c44c26eb8f4b6f35488f3ccbf6fbbd7adee0b7262d43f0ec2f00"
+            }
+          },
+          "pypi_313_pyyaml": {
+            "repoRuleId": "@@rules_python+//python/private/pypi:whl_library.bzl%whl_library",
+            "attributes": {
+              "dep_template": "@pypi//{name}:{target}",
+              "extra_pip_args": [
+                "--extra-index-url",
+                "https://download.pytorch.org/whl/cu126"
+              ],
+              "python_interpreter_target": "@@rules_python++python+python_3_13_host//:python",
+              "repo": "pypi_313",
+              "requirement": "pyyaml==6.0.2 --hash=sha256:01179a4a8559ab5de078078f37e5c1a30d76bb88519906844fd7bdea1b7729ff --hash=sha256:0833f8694549e586547b576dcfaba4a6b55b9e96098b36cdc7ebefe667dfed48 --hash=sha256:0a9a2848a5b7feac301353437eb7d5957887edbf81d56e903999a75a3d743086 --hash=sha256:0b69e4ce7a131fe56b7e4d770c67429700908fc0752af059838b1cfb41960e4e --hash=sha256:0ffe8360bab4910ef1b9e87fb812d8bc0a308b0d0eef8c8f44e0254ab3b07133 --hash=sha256:11d8f3dd2b9c1207dcaf2ee0bbbfd5991f571186ec9cc78427ba5bd32afae4b5 --hash=sha256:17e311b6c678207928d649faa7cb0d7b4c26a0ba73d41e99c4fff6b6c3276484 --hash=sha256:1e2120ef853f59c7419231f3bf4e7021f1b936f6ebd222406c3b60212205d2ee --hash=sha256:1f71ea527786de97d1a0cc0eacd1defc0985dcf6b3f17bb77dcfc8c34bec4dc5 --hash=sha256:23502f431948090f597378482b4812b0caae32c22213aecf3b55325e049a6c68 --hash=sha256:24471b829b3bf607e04e88d79542a9d48bb037c2267d7927a874e6c205ca7e9a --hash=sha256:29717114e51c84ddfba879543fb232a6ed60086602313ca38cce623c1d62cfbf --hash=sha256:2e99c6826ffa974fe6e27cdb5ed0021786b03fc98e5ee3c5bfe1fd5015f42b99 --hash=sha256:39693e1f8320ae4f43943590b49779ffb98acb81f788220ea932a6b6c51004d8 --hash=sha256:3ad2a3decf9aaba3d29c8f537ac4b243e36bef957511b4766cb0057d32b0be85 --hash=sha256:3b1fdb9dc17f5a7677423d508ab4f243a726dea51fa5e70992e59a7411c89d19 --hash=sha256:41e4e3953a79407c794916fa277a82531dd93aad34e29c2a514c2c0c5fe971cc --hash=sha256:43fa96a3ca0d6b1812e01ced1044a003533c47f6ee8aca31724f78e93ccc089a --hash=sha256:50187695423ffe49e2deacb8cd10510bc361faac997de9efef88badc3bb9e2d1 --hash=sha256:5ac9328ec4831237bec75defaf839f7d4564be1e6b25ac710bd1a96321cc8317 --hash=sha256:5d225db5a45f21e78dd9358e58a98702a0302f2659a3c6cd320564b75b86f47c --hash=sha256:6395c297d42274772abc367baaa79683958044e5d3835486c16da75d2a694631 --hash=sha256:688ba32a1cffef67fd2e9398a2efebaea461578b0923624778664cc1c914db5d --hash=sha256:68ccc6023a3400877818152ad9a1033e3db8625d899c72eacb5a668902e4d652 --hash=sha256:70b189594dbe54f75ab3a1acec5f1e3faa7e8cf2f1e08d9b561cb41b845f69d5 --hash=sha256:797b4f722ffa07cc8d62053e4cff1486fa6dc094105d13fea7b1de7d8bf71c9e --hash=sha256:7c36280e6fb8385e520936c3cb3b8042851904eba0e58d277dca80a5cfed590b --hash=sha256:7e7401d0de89a9a855c839bc697c079a4af81cf878373abd7dc625847d25cbd8 --hash=sha256:80bab7bfc629882493af4aa31a4cfa43a4c57c83813253626916b8c7ada83476 --hash=sha256:82d09873e40955485746739bcb8b4586983670466c23382c19cffecbf1fd8706 --hash=sha256:8388ee1976c416731879ac16da0aff3f63b286ffdd57cdeb95f3f2e085687563 --hash=sha256:8824b5a04a04a047e72eea5cec3bc266db09e35de6bdfe34c9436ac5ee27d237 --hash=sha256:8b9c7197f7cb2738065c481a0461e50ad02f18c78cd75775628afb4d7137fb3b --hash=sha256:9056c1ecd25795207ad294bcf39f2db3d845767be0ea6e6a34d856f006006083 --hash=sha256:936d68689298c36b53b29f23c6dbb74de12b4ac12ca6cfe0e047bedceea56180 --hash=sha256:9b22676e8097e9e22e36d6b7bda33190d0d400f345f23d4065d48f4ca7ae0425 --hash=sha256:a4d3091415f010369ae4ed1fc6b79def9416358877534caf6a0fdd2146c87a3e --hash=sha256:a8786accb172bd8afb8be14490a16625cbc387036876ab6ba70912730faf8e1f --hash=sha256:a9f8c2e67970f13b16084e04f134610fd1d374bf477b17ec1599185cf611d725 --hash=sha256:bc2fa7c6b47d6bc618dd7fb02ef6fdedb1090ec036abab80d4681424b84c1183 --hash=sha256:c70c95198c015b85feafc136515252a261a84561b7b1d51e3384e0655ddf25ab --hash=sha256:cc1c1159b3d456576af7a3e4d1ba7e6924cb39de8f67111c735f6fc832082774 --hash=sha256:ce826d6ef20b1bc864f0a68340c8b3287705cae2f8b4b1d932177dcc76721725 --hash=sha256:d584d9ec91ad65861cc08d42e834324ef890a082e591037abe114850ff7bbc3e --hash=sha256:d7fded462629cfa4b685c5416b949ebad6cec74af5e2d42905d41e257e0869f5 --hash=sha256:d84a1718ee396f54f3a086ea0a66d8e552b2ab2017ef8b420e92edbc841c352d --hash=sha256:d8e03406cac8513435335dbab54c0d385e4a49e4945d2909a581c83647ca0290 --hash=sha256:e10ce637b18caea04431ce14fabcf5c64a1c61ec9c56b071a4b7ca131ca52d44 --hash=sha256:ec031d5d2feb36d1d1a24380e4db6d43695f3748343d99434e6f5f9156aaa2ed --hash=sha256:ef6107725bd54b262d6dedcc2af448a266975032bc85ef0172c5f059da6325b4 --hash=sha256:efdca5630322a10774e8e98e1af481aad470dd62c3170801852d752aa7a783ba --hash=sha256:f753120cb8181e736c57ef7636e83f31b9c0d1722c516f7e86cf15b7aa57ff12 --hash=sha256:ff3824dc5261f50c9b0dfb3be22b4567a6f938ccce4587b38952d85fd9e9afe4"
             }
           },
           "pypi_313_requests": {
@@ -1235,6 +1300,19 @@
               "python_interpreter_target": "@@rules_python++python+python_3_13_host//:python",
               "repo": "pypi_313",
               "requirement": "tzdata==2025.2 --hash=sha256:1a403fada01ff9221ca8044d701868fa132215d84beb92242d9acd2147f667a8 --hash=sha256:b60a638fcc0daffadf82fe0f57e53d06bdec2f36c4df66280ae79bce6bd6f2b9"
+            }
+          },
+          "pypi_313_umap_learn": {
+            "repoRuleId": "@@rules_python+//python/private/pypi:whl_library.bzl%whl_library",
+            "attributes": {
+              "dep_template": "@pypi//{name}:{target}",
+              "extra_pip_args": [
+                "--extra-index-url",
+                "https://download.pytorch.org/whl/cu126"
+              ],
+              "python_interpreter_target": "@@rules_python++python+python_3_13_host//:python",
+              "repo": "pypi_313",
+              "requirement": "umap-learn==0.5.7 --hash=sha256:6a7e0be2facfa365a5ed6588447102bdbef32a0ef449535c25c97ea7e680073c --hash=sha256:b2a97973e4c6ffcebf241100a8de589a4c84126a832ab40f296c6d9fcc5eb19e"
             }
           },
           "pypi_313_urllib3": {
@@ -3586,11 +3664,13 @@
                 "filelock": "{\"pypi_313_filelock\":[{\"version\":\"3.13\"}]}",
                 "fonttools": "{\"pypi_313_fonttools\":[{\"version\":\"3.13\"}]}",
                 "fsspec": "{\"pypi_313_fsspec\":[{\"version\":\"3.13\"}]}",
+                "hdbscan": "{\"pypi_313_hdbscan\":[{\"version\":\"3.13\"}]}",
                 "idna": "{\"pypi_313_idna\":[{\"version\":\"3.13\"}]}",
                 "iniconfig": "{\"pypi_313_iniconfig\":[{\"version\":\"3.13\"}]}",
                 "jinja2": "{\"pypi_313_jinja2\":[{\"version\":\"3.13\"}]}",
                 "joblib": "{\"pypi_313_joblib\":[{\"version\":\"3.13\"}]}",
                 "kiwisolver": "{\"pypi_313_kiwisolver\":[{\"version\":\"3.13\"}]}",
+                "llvmlite": "{\"pypi_313_llvmlite\":[{\"version\":\"3.13\"}]}",
                 "markupsafe": "{\"pypi_313_markupsafe\":[{\"version\":\"3.13\"}]}",
                 "matplotlib": "{\"pypi_313_matplotlib\":[{\"version\":\"3.13\"}]}",
                 "mido": "{\"pypi_313_mido\":[{\"version\":\"3.13\"}]}",
@@ -3598,6 +3678,7 @@
                 "msgpack": "{\"pypi_313_msgpack\":[{\"version\":\"3.13\"}]}",
                 "ndindex": "{\"pypi_313_ndindex\":[{\"version\":\"3.13\"}]}",
                 "networkx": "{\"pypi_313_networkx\":[{\"version\":\"3.13\"}]}",
+                "numba": "{\"pypi_313_numba\":[{\"version\":\"3.13\"}]}",
                 "numexpr": "{\"pypi_313_numexpr\":[{\"version\":\"3.13\"}]}",
                 "numpy": "{\"pypi_313_numpy\":[{\"version\":\"3.13\"}]}",
                 "nvidia_cublas_cu12": "{\"pypi_313_nvidia_cublas_cu12\":[{\"version\":\"3.13\"}]}",
@@ -3620,10 +3701,12 @@
                 "pluggy": "{\"pypi_313_pluggy\":[{\"version\":\"3.13\"}]}",
                 "pretty_midi": "{\"pypi_313_pretty_midi\":[{\"version\":\"3.13\"}]}",
                 "py_cpuinfo": "{\"pypi_313_py_cpuinfo\":[{\"version\":\"3.13\"}]}",
+                "pynndescent": "{\"pypi_313_pynndescent\":[{\"version\":\"3.13\"}]}",
                 "pyparsing": "{\"pypi_313_pyparsing\":[{\"version\":\"3.13\"}]}",
                 "pytest": "{\"pypi_313_pytest\":[{\"version\":\"3.13\"}]}",
                 "python_dateutil": "{\"pypi_313_python_dateutil\":[{\"version\":\"3.13\"}]}",
                 "pytz": "{\"pypi_313_pytz\":[{\"version\":\"3.13\"}]}",
+                "pyyaml": "{\"pypi_313_pyyaml\":[{\"version\":\"3.13\"}]}",
                 "requests": "{\"pypi_313_requests\":[{\"version\":\"3.13\"}]}",
                 "scikit_learn": "{\"pypi_313_scikit_learn\":[{\"version\":\"3.13\"}]}",
                 "scipy": "{\"pypi_313_scipy\":[{\"version\":\"3.13\"}]}",
@@ -3639,6 +3722,7 @@
                 "triton": "{\"pypi_313_triton\":[{\"version\":\"3.13\"}]}",
                 "typing_extensions": "{\"pypi_313_typing_extensions\":[{\"version\":\"3.13\"}]}",
                 "tzdata": "{\"pypi_313_tzdata\":[{\"version\":\"3.13\"}]}",
+                "umap_learn": "{\"pypi_313_umap_learn\":[{\"version\":\"3.13\"}]}",
                 "urllib3": "{\"pypi_313_urllib3\":[{\"version\":\"3.13\"}]}"
               },
               "packages": [
@@ -3651,11 +3735,13 @@
                 "filelock",
                 "fonttools",
                 "fsspec",
+                "hdbscan",
                 "idna",
                 "iniconfig",
                 "jinja2",
                 "joblib",
                 "kiwisolver",
+                "llvmlite",
                 "markupsafe",
                 "matplotlib",
                 "mido",
@@ -3663,6 +3749,7 @@
                 "msgpack",
                 "ndindex",
                 "networkx",
+                "numba",
                 "numexpr",
                 "numpy",
                 "nvidia_cublas_cu12",
@@ -3685,10 +3772,12 @@
                 "pluggy",
                 "pretty_midi",
                 "py_cpuinfo",
+                "pynndescent",
                 "pyparsing",
                 "pytest",
                 "python_dateutil",
                 "pytz",
+                "pyyaml",
                 "requests",
                 "scikit_learn",
                 "scipy",
@@ -3704,6 +3793,7 @@
                 "triton",
                 "typing_extensions",
                 "tzdata",
+                "umap_learn",
                 "urllib3"
               ],
               "groups": {}

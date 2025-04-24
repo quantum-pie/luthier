@@ -9,8 +9,14 @@ scipy
 matplotlib
 tqdm
 scikit-learn
+scipy
 pandas
 pretty-midi
 tables
 pytest
 click
+pyyaml
+tqdm
+matplotlib
+hdbscan
+umap-learn

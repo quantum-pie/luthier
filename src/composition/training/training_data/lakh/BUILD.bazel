@@ -1,21 +1,32 @@
 
 py_library(
-    name = "loader",
-    srcs = ["loader.py"],
+    name = "parser",
+    srcs = ["parser.py"],
+    data = [
+        "config.yaml",
+    ],
     deps = [
+        "@bazel_tools//tools/python/runfiles", 
         "@pypi//tables",
+        "@pypi//pyyaml",
+        "@pypi//numpy",
+        "@pypi//tqdm",
+        "@pypi//scikit_learn",
+        "@pypi//matplotlib",
+        "@pypi//hdbscan",
+        "@pypi//umap_learn"
     ],
 )
 
 py_binary(
-    name = "test_loader",
+    name = "parser_runner",
     srcs = [
-        "test_loader.py", 
+        "parser_runner.py", 
         "hdf5_getters.py",
     ],
-    main = "test_loader.py",
+    main = "parser_runner.py",
     deps = [
-        ":loader",
+        ":parser",
         "@pypi//click",
     ],
 )
