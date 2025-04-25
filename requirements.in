@@ -20,3 +20,4 @@ tqdm
 matplotlib
 hdbscan
 umap-learn
+sentence-transformers

@@ -1,3 +1,6 @@
+load("@rules_python//python:defs.bzl", "py_binary", "py_library")
+
+exports_files(["game_genres_mapping.yaml"])
 
 py_library(
     name = "parser",
@@ -6,24 +9,29 @@ py_library(
         "config.yaml",
     ],
     deps = [
-        "@bazel_tools//tools/python/runfiles", 
-        "@pypi//tables",
-        "@pypi//pyyaml",
-        "@pypi//numpy",
-        "@pypi//tqdm",
-        "@pypi//scikit_learn",
-        "@pypi//matplotlib",
+        "@bazel_tools//tools/python/runfiles",
         "@pypi//hdbscan",
-        "@pypi//umap_learn"
+        "@pypi//matplotlib",
+        "@pypi//numpy",
+        "@pypi//pyyaml",
+        "@pypi//scikit_learn",
+        "@pypi//sentence_transformers",
+        "@pypi//tables",
+        "@pypi//tqdm",
+        "@pypi//umap_learn",
     ],
 )
 
 py_binary(
     name = "parser_runner",
     srcs = [
-        "parser_runner.py", 
         "hdf5_getters.py",
+        "parser_runner.py",
     ],
+    data = ["//third_party/pytorch_cuda_libs:cuda_so_files"],
+    env = {
+        "LD_LIBRARY_PATH": "third_party/pytorch_cuda_libs/lib",
+    },
     main = "parser_runner.py",
     deps = [
         ":parser",

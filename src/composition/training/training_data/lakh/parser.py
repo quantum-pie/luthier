@@ -1,3 +1,4 @@
+from collections import Counter
 from pathlib import Path
 import json
 import os
@@ -14,6 +15,9 @@ import hdbscan
 import umap.umap_ as umap
 
 from enum import Enum
+
+from sentence_transformers import SentenceTransformer
+
 
 from src.composition.training.training_data.lakh.hdf5_getters import *
 from bazel_tools.tools.python.runfiles import runfiles
@@ -41,7 +45,7 @@ class LakhParser:
         )
 
         with open(config_path, "r") as f:
-            self._config = yaml.safe_load(f)["lakh_loader"]
+            self._config = yaml.safe_load(f)["lakh_parser"]
 
         self._root = data_dir
         self._matched_data_dir = data_dir / "lmd_matched"
@@ -51,6 +55,10 @@ class LakhParser:
         self._cooccurrence_data = {}
         self._tag_clustering_path = data_dir / "clustering.pkl"
         self._tag_clustering = {}
+
+        self._sentence_model = SentenceTransformer(
+            "sentence-transformers/all-MiniLM-L6-v2"
+        )
 
         with open(data_dir / "md5_to_paths.json", "r") as f:
             logger.info("Loading MD5 to filename map...")
@@ -134,7 +142,7 @@ class LakhParser:
 
         # Step 3: Reduce dimensionaly
         reducer = umap.UMAP(
-            n_neighbors=50,
+            n_neighbors=10,
             min_dist=0.5,
             n_components=10,
             metric="cosine",
@@ -160,15 +168,21 @@ class LakhParser:
 
         labels_names = {}
         for label, tag_indices in labels_index.items():
-            cluster_tags_counts = [
-                self._cooccurrence_data["tag_counts"][i] for i in tag_indices
+            tag_names = [self._cooccurrence_data["tag_list"][i] for i in tag_indices]
+
+            embeddings = self._sentence_model.encode(tag_names)
+            centroid = np.mean(embeddings, axis=0)
+
+            similarities = cosine_similarity([centroid], embeddings)[0]
+            ranked_indices = np.argsort(similarities)[::-1]
+            top_tokens = [
+                tag_names[i] for i in ranked_indices[: min(3, len(tag_names))]
             ]
-            most_frequent_tag_idx = np.argmax(cluster_tags_counts)
-            cluster_name = self._cooccurrence_data["tag_list"][
-                tag_indices[most_frequent_tag_idx]
-            ]
-            labels_names[label] = cluster_name
+            cluster_name = f"{top_tokens[0]} ({' / '.join(top_tokens[1:])})"
+
+            labels_names[int(label)] = cluster_name
             logger.info(f"Cluster id {label} has name {cluster_name}")
+            logger.info(f"Cluster id {label} has tags {tag_names}")
 
         result = {
             "labels_list": labels,
@@ -178,6 +192,9 @@ class LakhParser:
         self._tag_clustering = result
         with open(self._tag_clustering_path, "wb") as f:
             pickle.dump(result, f)
+
+        with open(self._root / "cluster_id_to_name.yaml", "w") as f:
+            yaml.dump({"clusted_id_to_name": labels_names}, f)
 
     def build_tag_cooccurrence(self):
         if Path.exists(self._cooccurrence_path):
