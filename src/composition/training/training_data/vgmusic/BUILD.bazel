@@ -1,0 +1,15 @@
+load("@rules_python//python:defs.bzl", "py_binary")
+
+py_binary(
+    name = "scraper",
+    srcs = [
+        "scraper.py",
+    ],
+    main = "scraper.py",
+    deps = [
+        "@pypi//beautifulsoup4",
+        "@pypi//click",
+        "@pypi//requests",
+        "@pypi//tqdm",
+    ],
+)
