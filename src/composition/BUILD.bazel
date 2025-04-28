@@ -4,3 +4,8 @@ py_library(
     name = "game_genres",
     srcs = ["game_genres.py"],
 )
+
+py_library(
+    name = "game_moods",
+    srcs = ["game_moods.py"],
+)

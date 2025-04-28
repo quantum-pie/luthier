@@ -1,6 +1,17 @@
-load("@rules_python//python:defs.bzl", "py_library")
+load("@rules_python//python:defs.bzl", "py_binary", "py_library")
 
 py_library(
     name = "midi_parser",
     srcs = ["midi_parser.py"],
+)
+
+py_binary(
+    name = "midi_tagger",
+    srcs = ["midi_tagger.py"],
+    main = "midi_tagger.py",
+    deps = [
+        "src/composition/game_genres:game_genres",
+        "src/composition/game_moods:game_moods",
+        "@pypi//click",
+    ],
 )
