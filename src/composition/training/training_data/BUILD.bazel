@@ -10,8 +10,8 @@ py_binary(
     srcs = ["midi_tagger.py"],
     main = "midi_tagger.py",
     deps = [
-        "src/composition/game_genres:game_genres",
-        "src/composition/game_moods:game_moods",
+        "//src/composition:game_genres",
+        "//src/composition:game_moods",
         "@pypi//click",
     ],
 )

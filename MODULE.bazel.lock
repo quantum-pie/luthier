@@ -328,7 +328,7 @@
         "bzlTransitiveDigest": "w9qbx9gy25U04n5Tfmetw5ONAylCOEsMTo5DeljQ2GQ=",
         "usagesDigest": "XTKCEeqNsAnues6kx8GL80ifTLnMVyvz2ivKFspE6aE=",
         "recordedFileInputs": {
-          "@@//requirements_lock.txt": "3099359adf797f4d2afe0f4061825a15dd0a3603b4f20ee42448630192774a02",
+          "@@//requirements_lock.txt": "c084327fdfb83396b5750b7f29ae303699e845978a373cd1288739de24c38862",
           "@@protobuf+//python/requirements.txt": "983be60d3cec4b319dcab6d48aeb3f5b2f7c3350f26b3a9e97486c37967c73c5",
           "@@rules_fuzzing+//fuzzing/requirements.txt": "ab04664be026b632a0d2a2446c4f65982b7654f5b6851d2f9d399a19b7242a5b",
           "@@rules_python+//tools/publish/requirements_darwin.txt": "095d4a4f3d639dce831cd493367631cd51b53665292ab20194bac2c0c6458fa8",
@@ -1053,19 +1053,6 @@
               "python_interpreter_target": "@@rules_python++python+python_3_13_host//:python",
               "repo": "pypi_313",
               "requirement": "py-cpuinfo==9.0.0 --hash=sha256:3cdbbf3fac90dc6f118bfd64384f309edeadd902d7c8fb17f02ffa1fc3f49690 --hash=sha256:859625bc251f64e21f077d099d4162689c762b5d6a4c3c97553d56241c9674d5"
-            }
-          },
-          "pypi_313_pyfluidsynth": {
-            "repoRuleId": "@@rules_python+//python/private/pypi:whl_library.bzl%whl_library",
-            "attributes": {
-              "dep_template": "@pypi//{name}:{target}",
-              "extra_pip_args": [
-                "--extra-index-url",
-                "https://download.pytorch.org/whl/cu126"
-              ],
-              "python_interpreter_target": "@@rules_python++python+python_3_13_host//:python",
-              "repo": "pypi_313",
-              "requirement": "pyfluidsynth==1.3.4 --hash=sha256:c6990329db7cfb35f5e65d523dd4f0c971d928e70df3a6bceec8864827edf246 --hash=sha256:ca741c262b72e48963149c73bf8ae80e45c84c23c9bdf803a26ba324cbb2d5b2"
             }
           },
           "pypi_313_pygame": {
@@ -3833,7 +3820,6 @@
                 "pluggy": "{\"pypi_313_pluggy\":[{\"version\":\"3.13\"}]}",
                 "pretty_midi": "{\"pypi_313_pretty_midi\":[{\"version\":\"3.13\"}]}",
                 "py_cpuinfo": "{\"pypi_313_py_cpuinfo\":[{\"version\":\"3.13\"}]}",
-                "pyfluidsynth": "{\"pypi_313_pyfluidsynth\":[{\"version\":\"3.13\"}]}",
                 "pygame": "{\"pypi_313_pygame\":[{\"version\":\"3.13\"}]}",
                 "pynndescent": "{\"pypi_313_pynndescent\":[{\"version\":\"3.13\"}]}",
                 "pyparsing": "{\"pypi_313_pyparsing\":[{\"version\":\"3.13\"}]}",
@@ -3914,7 +3900,6 @@
                 "pluggy",
                 "pretty_midi",
                 "py_cpuinfo",
-                "pyfluidsynth",
                 "pygame",
                 "pynndescent",
                 "pyparsing",
