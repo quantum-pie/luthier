@@ -21,3 +21,4 @@ matplotlib
 hdbscan
 umap-learn
 sentence-transformers
+pygame
