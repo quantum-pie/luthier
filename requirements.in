@@ -22,3 +22,5 @@ hdbscan
 umap-learn
 sentence-transformers
 pygame
+beautifulsoup4
+requests
