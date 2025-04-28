@@ -1,4 +1,4 @@
-lakh_parser:
+tag_clustering:
   min_match_score: 0.5
   min_cluster_size: 5
   min_cluster_score: 2.0

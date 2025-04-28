@@ -1,7 +1,5 @@
-from collections import Counter
 from pathlib import Path
-import json
-import os
+import click
 import logging
 import yaml
 import numpy as np
@@ -22,10 +20,9 @@ from sentence_transformers import SentenceTransformer
 from src.composition.training.training_data.lakh.hdf5_getters import *
 from bazel_tools.tools.python.runfiles import runfiles
 
-logger = logging.getLogger(__name__)
+from src.composition.training.training_data.lakh.lakh import Lakh
 
-KEY_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
-MODE_NAMES = ["Minor", "Major"]
+logger = logging.getLogger(__name__)
 
 
 class MatchedMidiType(Enum):
@@ -33,24 +30,26 @@ class MatchedMidiType(Enum):
     aligned = 1
 
 
-class LakhParser:
+class TagClusterer:
     """
-    This class is responsible for loading the Lakh MIDI dataset.
+    This class is responsible for clustering the aligned
+    Lakh MIDI dataset tags and assigning tags to song ids. Note that the clustering
+    result is not usable in commercial product, because tags are coming from Eagle Nest API.
+    The clustering is done using HDBSCAN and UMAP.
     """
 
     def __init__(self, data_dir: Path):
         r = runfiles.Create()
         config_path = Path(
-            r.Rlocation("_main/src/composition/training/training_data/lakh/config.yaml")
+            r.Rlocation(
+                "_main/src/composition/training/training_data/lakh/tag_clustering_config.yaml"
+            )
         )
 
         with open(config_path, "r") as f:
-            self._config = yaml.safe_load(f)["lakh_parser"]
+            self._config = yaml.safe_load(f)["tag_clustering"]
 
-        self._root = data_dir
-        self._matched_data_dir = data_dir / "lmd_matched"
-        self._aligned_data_dir = data_dir / "lmd_aligned"
-        self._metadata_dir = data_dir / "lmd_matched_h5"
+        self._lakh = Lakh(data_dir)
         self._cooccurrence_path = data_dir / "cooccurrence.pkl"
         self._cooccurrence_data = {}
         self._tag_clustering_path = data_dir / "clustering.pkl"
@@ -58,39 +57,6 @@ class LakhParser:
 
         self._sentence_model = SentenceTransformer(
             "sentence-transformers/all-MiniLM-L6-v2"
-        )
-
-        with open(data_dir / "md5_to_paths.json", "r") as f:
-            logger.info("Loading MD5 to filename map...")
-            self._md5_to_filename = json.load(f)
-
-        with open(data_dir / "match_scores.json", "r") as f:
-            logger.info("Loading matching scores...")
-            self._match_scores = json.load(f)
-
-        self.build_tag_cooccurrence()
-        self.cluster_tags()
-        self.classify_songs_into_tag_clusters()
-
-    @staticmethod
-    def song_id_to_dir(song_id: str) -> str:
-        return os.path.join(song_id[2], song_id[3], song_id[4], song_id)
-
-    def song_id_to_metada_path(self, song_id: str):
-        return self._metadata_dir / Path(
-            LakhParser.song_id_to_dir(song_id)
-        ).with_suffix(".h5")
-
-    def song_id_to_midi_path(self, song_id: str, midi_md5: str, type: MatchedMidiType):
-        base_dir = (
-            self._matched_data_dir
-            if type == MatchedMidiType.matched
-            else self._aligned_data_dir
-        )
-        return (
-            base_dir
-            / Path(LakhParser.song_id_to_dir(song_id))
-            / Path(midi_md5).with_suffix(".mid")
         )
 
     def calculate_cluster_scores(self, artist_terms, weights):
@@ -127,7 +93,7 @@ class LakhParser:
         plt.ylabel("Number of tags")
         plt.title("Tag Connectivity Histogram")
         plt.tight_layout()
-        plt.savefig(self._root / "connectivity_distribution.png", dpi=300)
+        plt.savefig(self._lakh._root / "connectivity_distribution.png", dpi=300)
         plt.close()
 
         cutoff = np.percentile(connectivity, 10)
@@ -193,7 +159,7 @@ class LakhParser:
         with open(self._tag_clustering_path, "wb") as f:
             pickle.dump(result, f)
 
-        with open(self._root / "cluster_id_to_name.yaml", "w") as f:
+        with open(self._lakh._root / "cluster_id_to_name.yaml", "w") as f:
             yaml.dump({"clusted_id_to_name": labels_names}, f)
 
     def build_tag_cooccurrence(self):
@@ -205,12 +171,12 @@ class LakhParser:
 
         tag_set = set()
         logger.info("Collecting tags...")
-        for song_id, matches in tqdm(self._match_scores.items()):
+        for song_id, matches in tqdm(self._lakh._match_scores.items()):
             for _, score in matches.items():
                 if score < self._config["min_match_score"]:
                     continue
 
-                metadata_path = self.song_id_to_metada_path(song_id)
+                metadata_path = self._lakh.song_id_to_metada_path(song_id)
                 with open_h5_file_read(metadata_path) as meta:
                     artist_terms = get_artist_terms(meta)
                     tag_set.update(tag.decode("utf-8").lower() for tag in artist_terms)
@@ -224,12 +190,12 @@ class LakhParser:
         tag_cooccurrence = np.zeros((len(tag_list), len(tag_list)), np.uint32)
 
         logger.info("Calculating co-occurrence...")
-        for song_id, matches in tqdm(self._match_scores.items()):
+        for song_id, matches in tqdm(self._lakh._match_scores.items()):
             for _, score in matches.items():
                 if score < self._config["min_match_score"]:
                     continue
 
-                metadata_path = self.song_id_to_metada_path(song_id)
+                metadata_path = self._lakh.song_id_to_metada_path(song_id)
                 with open_h5_file_read(metadata_path) as meta:
                     artist_terms = get_artist_terms(meta)
                     tags = [tag.decode("utf-8").lower() for tag in artist_terms]
@@ -267,16 +233,12 @@ class LakhParser:
         songs_per_cluster = np.zeros(
             len(self._tag_clustering["labels_index"]), np.uint32
         )
-        for song_id, matches in tqdm(self._match_scores.items()):
+        for song_id, matches in tqdm(self._lakh._match_scores.items()):
             for md5, score in matches.items():
                 if score < self._config["min_match_score"]:
                     continue
 
-                # original_filename = self._md5_to_filename[md5]
-                # location = self.song_id_to_midi_path(
-                #     song_id, md5, MatchedMidiType.aligned
-                # )
-                metadata_path = self.song_id_to_metada_path(song_id)
+                metadata_path = self._lakh.song_id_to_metada_path(song_id)
                 with open_h5_file_read(metadata_path) as meta:
                     artist_terms = get_artist_terms(meta)
                     weights = get_artist_terms_freq(meta)
@@ -290,20 +252,6 @@ class LakhParser:
                     for cluster, score in cluster_scores.items():
                         if score > self._config["min_cluster_score"]:
                             songs_per_cluster[cluster] += 1
-                            # logger.info(
-                            #     f"Song matches cluster {best_cluster} confidently ({cluster_scores[best_cluster]:.2f})"
-                            # )
-
-                            # logger.info(f"Song artist: {get_artist_name(meta)}")
-                            # logger.info(f"Song title: {get_title(meta)}")
-                            # logger.info(f"Song artist terms: {get_artist_terms(meta)}")
-                            # tags_in_cluster = [
-                            #     self._cooccurrence_data["tag_list"][idx]
-                            #     for idx in self._tag_clustering["labels_index"][
-                            #         best_cluster
-                            #     ]
-                            # ]
-                            # logger.info(f"Tags in cluster: {tags_in_cluster}")
 
         # Draw distribution
         plt.bar(list(range(len(songs_per_cluster))), songs_per_cluster)
@@ -313,5 +261,19 @@ class LakhParser:
         plt.ylabel("Songs Count")
         plt.grid(True)
         plt.tight_layout()
-        plt.savefig(self._root / "songs_cluster_distribution.png", dpi=300)
+        plt.savefig(self._lakh._root / "songs_cluster_distribution.png", dpi=300)
         plt.close()
+
+
+@click.command()
+@click.option("--dataset_dir", type=Path, required=True)
+def cli(dataset_dir):
+    clusterer = TagClusterer(dataset_dir)
+    clusterer.build_tag_cooccurrence()
+    clusterer.cluster_tags()
+    clusterer.classify_songs_into_tag_clusters()
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    cli()
