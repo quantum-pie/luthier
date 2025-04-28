@@ -3,9 +3,11 @@ load("@rules_python//python:defs.bzl", "py_library")
 py_library(
     name = "game_genres",
     srcs = ["game_genres.py"],
+    visibility = ["//visibility:public"],
 )
 
 py_library(
     name = "game_moods",
     srcs = ["game_moods.py"],
+    visibility = ["//visibility:public"],
 )
