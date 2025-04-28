@@ -1,15 +1,28 @@
 load("@rules_python//python:defs.bzl", "py_binary", "py_library")
 
-exports_files(["game_genres_mapping.yaml"])
-
 py_library(
-    name = "parser",
-    srcs = ["parser.py"],
-    data = [
-        "config.yaml",
+    name = "lakh",
+    srcs = ["lakh.py"],
+)
+
+py_binary(
+    name = "tag_clustering",
+    srcs = [
+        "hdf5_getters.py",
+        "tag_clustering.py",
     ],
+    data = [
+        "tag_clustering_config.yaml",
+        "//third_party/pytorch_cuda_libs:cuda_so_files",
+    ],
+    env = {
+        "LD_LIBRARY_PATH": "third_party/pytorch_cuda_libs/lib",
+    },
+    main = "tag_clustering.py",
     deps = [
+        ":lakh",
         "@bazel_tools//tools/python/runfiles",
+        "@pypi//click",
         "@pypi//hdbscan",
         "@pypi//matplotlib",
         "@pypi//numpy",
@@ -19,22 +32,5 @@ py_library(
         "@pypi//tables",
         "@pypi//tqdm",
         "@pypi//umap_learn",
-    ],
-)
-
-py_binary(
-    name = "parser_runner",
-    srcs = [
-        "hdf5_getters.py",
-        "parser_runner.py",
-    ],
-    data = ["//third_party/pytorch_cuda_libs:cuda_so_files"],
-    env = {
-        "LD_LIBRARY_PATH": "third_party/pytorch_cuda_libs/lib",
-    },
-    main = "parser_runner.py",
-    deps = [
-        ":parser",
-        "@pypi//click",
     ],
 )
