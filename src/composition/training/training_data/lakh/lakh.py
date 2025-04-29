@@ -41,6 +41,9 @@ class Lakh:
             ".h5"
         )
 
+    def get_match_scores(self):
+        return self._match_scores
+
     def song_id_to_midi_path(self, song_id: str, midi_md5: str, type: MatchedMidiType):
         base_dir = (
             self._matched_data_dir

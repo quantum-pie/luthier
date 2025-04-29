@@ -49,6 +49,7 @@ class TagClusterer:
         with open(config_path, "r") as f:
             self._config = yaml.safe_load(f)["tag_clustering"]
 
+        self._root = data_dir
         self._lakh = Lakh(data_dir)
         self._cooccurrence_path = data_dir / "cooccurrence.pkl"
         self._cooccurrence_data = {}
@@ -93,7 +94,7 @@ class TagClusterer:
         plt.ylabel("Number of tags")
         plt.title("Tag Connectivity Histogram")
         plt.tight_layout()
-        plt.savefig(self._lakh._root / "connectivity_distribution.png", dpi=300)
+        plt.savefig(self._root / "connectivity_distribution.png", dpi=300)
         plt.close()
 
         cutoff = np.percentile(connectivity, 10)
@@ -159,7 +160,7 @@ class TagClusterer:
         with open(self._tag_clustering_path, "wb") as f:
             pickle.dump(result, f)
 
-        with open(self._lakh._root / "cluster_id_to_name.yaml", "w") as f:
+        with open(self._root / "cluster_id_to_name.yaml", "w") as f:
             yaml.dump({"clusted_id_to_name": labels_names}, f)
 
     def build_tag_cooccurrence(self):
@@ -171,7 +172,7 @@ class TagClusterer:
 
         tag_set = set()
         logger.info("Collecting tags...")
-        for song_id, matches in tqdm(self._lakh._match_scores.items()):
+        for song_id, matches in tqdm(self._lakh.get_match_scores().items()):
             for _, score in matches.items():
                 if score < self._config["min_match_score"]:
                     continue
@@ -190,7 +191,7 @@ class TagClusterer:
         tag_cooccurrence = np.zeros((len(tag_list), len(tag_list)), np.uint32)
 
         logger.info("Calculating co-occurrence...")
-        for song_id, matches in tqdm(self._lakh._match_scores.items()):
+        for song_id, matches in tqdm(self._lakh.get_match_scores().items()):
             for _, score in matches.items():
                 if score < self._config["min_match_score"]:
                     continue
@@ -233,7 +234,7 @@ class TagClusterer:
         songs_per_cluster = np.zeros(
             len(self._tag_clustering["labels_index"]), np.uint32
         )
-        for song_id, matches in tqdm(self._lakh._match_scores.items()):
+        for song_id, matches in tqdm(self._lakh.get_match_scores().items()):
             for md5, score in matches.items():
                 if score < self._config["min_match_score"]:
                     continue
@@ -261,7 +262,7 @@ class TagClusterer:
         plt.ylabel("Songs Count")
         plt.grid(True)
         plt.tight_layout()
-        plt.savefig(self._lakh._root / "songs_cluster_distribution.png", dpi=300)
+        plt.savefig(self._root / "songs_cluster_distribution.png", dpi=300)
         plt.close()
 
 

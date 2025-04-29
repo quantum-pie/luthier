@@ -1,5 +1,4 @@
 from pathlib import Path
-import subprocess
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import csv
@@ -10,18 +9,20 @@ import click
 from src.composition.game_genres import GameGenres
 from src.composition.game_moods import GameMoods
 
+from src.composition.training.training_data.midi_player import MidiPlayer
+
 
 class MidiTaggerApp:
     def __init__(self, root, soundfont_path=None):
+        self.player = MidiPlayer(soundfont_path)
+
         self.root = root
-        self.soundfont_path = soundfont_path
         self.root.title("MIDI Tagger with Metadata")
 
         self.file_list = []
         self.current_index = 0
 
         self.create_widgets()
-        self.player_process = None
 
     def create_widgets(self):
         frame = tk.Frame(self.root)
@@ -131,24 +132,10 @@ class MidiTaggerApp:
 
     def play_midi(self):
         if self.current_index < len(self.file_list):
-            if self.player_process:
-                subprocess.call(
-                    ["taskkill", "/F", "/T", "/PID", str(self.player_process.pid)]
-                )
-
-            filename = self.file_list[self.current_index]
-            cmd = ["fluidsynth", "-ni"]
-            if self.soundfont_path:
-                cmd.append(self.soundfont_path)
-            cmd.append(filename)
-            self.player_process = subprocess.Popen(cmd)
+            self.player.play_midi(self.file_list[self.current_index])
 
     def stop_midi(self):
-        if self.player_process:
-            subprocess.call(
-                ["taskkill", "/F", "/T", "/PID", str(self.player_process.pid)]
-            )
-            self.player_process = None
+        self.player.stop_midi()
 
     def save_tag(self, keep):
         if self.current_index < len(self.file_list):
