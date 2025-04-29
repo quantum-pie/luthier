@@ -14,5 +14,6 @@ py_binary(
         "//src/composition:game_genres",
         "//src/composition:game_moods",
         "@pypi//click",
+        "@pypi//requests",
     ],
 )
