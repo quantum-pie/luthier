@@ -14,5 +14,5 @@ class GameGenres(Enum):
     MODERN_URBAN = "modern urban"
     SURREAL = "surreal"
     WESTERN = "western"
-    WHIMSICAL = "whimsical"
+    CHILDLIKE = "childlike"
     # Add more genres as needed
