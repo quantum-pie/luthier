@@ -17,3 +17,7 @@ class GameMoods(Enum):
     WHIMSICAL = "whimsical"
     LONELY = "lonely"
     MAGICAL = "magical"
+    HAPPY = "happy"
+    ROMANTIC = "romantic"
+    SUSPENSEFUL = "suspenseful"
+    ETHEREAL = "ethereal"

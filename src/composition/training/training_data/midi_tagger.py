@@ -5,7 +5,6 @@ import csv
 import os
 import json
 import requests
-from urllib.parse import quote
 
 import click
 import re
