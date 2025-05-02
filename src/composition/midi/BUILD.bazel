@@ -1,0 +1,17 @@
+load("@rules_python//python:defs.bzl", "py_library", "py_test")
+
+py_library(
+    name = "rhythm_quantizer",
+    srcs = ["rhythm_quantizer.py"],
+    visibility = ["//visibility:public"],
+)
+
+py_test(
+    name = "rhythm_quantizer_test",
+    timeout = "short",  # Use short timeout for tests
+    srcs = ["tests/rhythm_quantizer_test.py"],
+    deps = [
+        ":rhythm_quantizer",
+        "@pypi//pytest",
+    ],
+)
