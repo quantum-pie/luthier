@@ -1,0 +1,45 @@
+load("@rules_python//python:defs.bzl", "py_binary", "py_library")
+
+py_library(
+    name = "dataset_resolver",
+    srcs = ["dataset_resolver.py"],
+    data = [
+        "//datasets/lakh:lmd_full",
+        "//datasets/lakh:lmd_full_valid_manifest",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@bazel_tools//tools/python/runfiles",
+    ],
+)
+
+py_binary(
+    name = "train_latent",
+    srcs = ["train_latent.py"],
+    data = [
+        "//third_party/pytorch_cuda_libs:cuda_so_files",
+    ],
+    env = {
+        "LD_LIBRARY_PATH": "third_party/pytorch_cuda_libs/lib",
+    },
+    main = "train_latent.py",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":dataset_resolver",
+        "//src/composition:game_genres",
+        "//src/composition:game_moods",
+        "//src/composition/model:conductor_model",
+        "//src/composition/training/config",
+        "//src/composition/training/losses:instrument_activation_loss",
+        "//src/composition/training/losses:instrument_counts_loss",
+        "//src/composition/training/losses:tempo_loss",
+        "//src/composition/training/training_data/dataloader:supervised_loader",
+        "//src/composition/training/training_data/dataloader:unsupervised_loader",
+        "//src/composition/training/training_data/dataloader:utils",
+        "@bazel_tools//tools/python/runfiles",
+        "@pypi//click",
+        "@pypi//numpy",
+        "@pypi//torch",
+        "@pypi//tqdm",
+    ],
+)

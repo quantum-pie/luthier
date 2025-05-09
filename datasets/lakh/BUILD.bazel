@@ -1,0 +1,38 @@
+load("@rules_python//python:defs.bzl", "py_binary")
+
+filegroup(
+    name = "lmd_full",
+    srcs = glob(["lmd_full/**"]),
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "lmd_full_valid_manifest",
+    srcs = ["lmd_full_valid_manifest.txt"],
+    visibility = ["//visibility:public"],
+)
+
+genrule(
+    name = "lmd_full_manifest",
+    srcs = glob(["lmd_full/**"]),
+    outs = ["lmd_full_manifest.txt"],
+    cmd = "printf '%s\n' $(SRCS) | sort > $@",
+    visibility = ["//visibility:public"],
+)
+
+py_binary(
+    name = "filter_valid_midi_files",
+    srcs = ["filter_valid_midi_files.py"],
+    data = [
+        ":lmd_full",
+        ":lmd_full_manifest",
+    ],
+    main = "filter_valid_midi_files.py",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@bazel_tools//tools/python/runfiles",
+        "@pypi//click",
+        "@pypi//mido",
+        "@pypi//tqdm",
+    ],
+)

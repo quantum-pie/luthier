@@ -24,3 +24,6 @@ sentence-transformers
 pygame
 beautifulsoup4
 requests
+einops
+huggingface-hub
+transformers

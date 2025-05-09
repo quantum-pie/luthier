@@ -1,0 +1,68 @@
+load("@rules_python//python:defs.bzl", "py_library", "py_test")
+
+py_library(
+    name = "instrument_counts_loss",
+    srcs = [
+        "instrument_counts_loss.py",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@pypi//torch",
+    ],
+)
+
+py_library(
+    name = "instrument_activation_loss",
+    srcs = [
+        "instrument_activation_loss.py",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@pypi//scipy",
+        "@pypi//torch",
+    ],
+)
+
+py_library(
+    name = "tempo_loss",
+    srcs = [
+        "tempo_loss.py",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//src/composition/midi:tempo_normalizer",
+        "@pypi//torch",
+    ],
+)
+
+py_test(
+    name = "instrument_counts_loss_test",
+    timeout = "short",
+    srcs = ["tests/instrument_counts_loss_test.py"],
+    data = [
+        "//third_party/pytorch_cuda_libs:cuda_so_files",
+    ],
+    env = {
+        "LD_LIBRARY_PATH": "third_party/pytorch_cuda_libs/lib",
+    },
+    deps = [
+        ":instrument_counts_loss",
+        "@pypi//pytest",
+    ],
+)
+
+py_test(
+    name = "instrument_activation_loss_test",
+    timeout = "short",
+    srcs = ["tests/instrument_activation_loss_test.py"],
+    data = [
+        "//third_party/pytorch_cuda_libs:cuda_so_files",
+    ],
+    env = {
+        "LD_LIBRARY_PATH": "third_party/pytorch_cuda_libs/lib",
+    },
+    deps = [
+        ":instrument_activation_loss",
+        "@pypi//pytest",
+    ],
+)

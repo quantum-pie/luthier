@@ -1,0 +1,23 @@
+defaults:
+  - base.yaml
+  - model.yaml
+
+datasets:
+  - lakh_full
+
+training:
+  epochs: 100
+
+dataloader:
+  batch_size: 256
+  shuffle: true
+
+optimizer:
+  name: AdamW
+  lr: 0.0005
+  weight_decay: 0.01
+
+loss:
+  independent_instrument_activation_supervision: True
+
+

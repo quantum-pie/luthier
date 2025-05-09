@@ -3,4 +3,15 @@ bazel-Luthier
 bazel-out
 bazel-testlogs
 third_party
-.bazelrc.local
+
+datasets/lakh/*
+datasets/vgmusic/*
+
+!datasets/
+!datasets/lakh/
+!datasets/lakh/BUILD.bazel
+!datasets/lakh/filter_valid_midi_files.py
+
+!datasets/vgmusic/
+!datasets/vgmusic/BUILD.bazel
+!datasets/vgmusic/vgmusic_sources.txt

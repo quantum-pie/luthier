@@ -1,0 +1,17 @@
+filegroup(
+    name = "full",
+    srcs = glob(["**"]),
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "ps4",
+    srcs = glob(["ps4/**"]),
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "xbox360",
+    srcs = glob(["xbox360/**"]),
+    visibility = ["//visibility:public"],
+)
