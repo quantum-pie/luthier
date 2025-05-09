@@ -6,12 +6,65 @@ py_library(
     visibility = ["//visibility:public"],
 )
 
+py_library(
+    name = "velocity_quantizer",
+    srcs = ["velocity_quantizer.py"],
+    visibility = ["//visibility:public"],
+)
+
+py_library(
+    name = "tempo_normalizer",
+    srcs = ["tempo_normalizer.py"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@pypi//torch",
+    ],
+)
+
+py_library(
+    name = "tokenizer",
+    srcs = ["tokenizer.py"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":velocity_quantizer",
+        "@pypi//mido",
+    ],
+)
+
 py_test(
     name = "rhythm_quantizer_test",
-    timeout = "short",  # Use short timeout for tests
+    timeout = "short",
     srcs = ["tests/rhythm_quantizer_test.py"],
     deps = [
         ":rhythm_quantizer",
         "@pypi//pytest",
+    ],
+)
+
+# commented out code is to show how to import mamba
+py_test(
+    name = "tokenizer_test",
+    timeout = "short",
+    srcs = ["tests/tokenizer_test.py"],
+    data = [
+        "//datasets/lakh:lmd_full",
+        "//datasets/vgmusic:xbox360",
+        #"//third_party/pytorch_cuda_libs:cuda_so_files",
+    ],
+    # env = {
+    #     "LD_LIBRARY_PATH": "third_party/pytorch_cuda_libs/lib",
+    # },
+    deps = [
+        ":tokenizer",
+        #"//third_party:mamba_ssm",
+        "@bazel_tools//tools/python/runfiles",
+        #"@pypi//einops",
+        #"@pypi//huggingface_hub",
+        "@pypi//numpy",
+        "@pypi//pretty_midi",
+        "@pypi//pytest",
+        "@pypi//setuptools",
+        #"@pypi//torch",
+        #"@pypi//transformers",
     ],
 )

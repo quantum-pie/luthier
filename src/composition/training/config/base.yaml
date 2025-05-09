@@ -1,0 +1,11 @@
+device: cuda
+#num_workers: 4
+num_workers: 4
+
+num_instruments: 129 # 128 GM + 1 for drums
+max_instrument_instances: 10 
+
+vocab:
+  pitch_vocab_size: 128
+  velocity_vocab_size: 32
+

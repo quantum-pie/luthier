@@ -1,0 +1,16 @@
+load("@rules_python//python:defs.bzl", "py_library")
+
+py_library(
+    name = "config",
+    srcs = ["config.py"],
+    data = [
+        "base.yaml",
+        "latent_pretrain.yaml",
+        "model.yaml",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@bazel_tools//tools/python/runfiles",
+        "@pypi//pyyaml",
+    ],
+)

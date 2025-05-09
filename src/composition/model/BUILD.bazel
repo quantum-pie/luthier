@@ -1,0 +1,81 @@
+load("@rules_python//python:defs.bzl", "py_library")
+
+# py_library(
+#     name = "bar_cached_cross_attention",
+#     srcs = ["bar_cached_cross_attention.py"],
+#     visibility = ["//visibility:public"],
+#     deps = ["@pypi//torch"],
+# )
+
+py_library(
+    name = "control_enconder",
+    srcs = ["control_encoder.py"],
+    visibility = ["//visibility:public"],
+    deps = ["@pypi//torch"],
+)
+
+py_library(
+    name = "instrument_count_head",
+    srcs = ["instrument_count_head.py"],
+    visibility = ["//visibility:public"],
+    deps = ["@pypi//torch"],
+)
+
+py_library(
+    name = "latent_interpolator",
+    srcs = ["latent_interpolator.py"],
+    visibility = ["//visibility:public"],
+    deps = ["@pypi//torch"],
+)
+
+py_library(
+    name = "latent_prior_net",
+    srcs = ["latent_prior_net.py"],
+    visibility = ["//visibility:public"],
+    deps = ["@pypi//torch"],
+)
+
+py_library(
+    name = "utils",
+    srcs = ["utils.py"],
+    visibility = ["//visibility:public"],
+    deps = ["@pypi//torch"],
+)
+
+py_library(
+    name = "time_aware_embedding",
+    srcs = ["time_aware_embedding.py"],
+    visibility = ["//visibility:public"],
+    deps = ["@pypi//torch"],
+)
+
+py_library(
+    name = "conductor_model",
+    srcs = ["conductor_model.py"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":control_enconder",
+        ":instrument_count_head",
+        ":latent_interpolator",
+        ":latent_prior_net",
+        ":utils",
+        ":time_aware_embedding",
+        #"//src/composition/midi:tokenizer",
+    ],
+)
+
+# py_library(
+#     name = "model",
+#     srcs = ["model.py"],
+#     visibility = ["//visibility:public"],
+#     deps = [
+#         ":bar_cached_cross_attention",
+#         ":control_econder",
+#         ":instrument_count_head",
+#         ":latent_interpolator",
+#         ":latent_prior_net",
+#         ":utils",
+#         "//src/composition/midi:tokenizer",
+#         # use mamba like in the tokenizer test
+#     ],
+# )
