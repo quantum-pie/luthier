@@ -65,17 +65,9 @@ class Conductor(nn.Module):
 
     def forward(
         self,
-        model_inputs,  # Model inputs (batch, seq_len, input_dim)
-        control_tokens=None,  # Control token tensor (batch,)
+        model_inputs,
+        control_tokens=None,
     ):
-        # bar_positions = beat_positions.floor()  # (batch, seq_len)
-        # SAMPLE TEMPOS, BAR POS AND INST PROBS ON GLOBAL GRID FOR LOSS, make sure that global tempo grid as same accross the batch dim
-        # THIS GRID IS SAMPLED AT EVERY BAR - GENIUS, MAKE SURE BAR POSITIONS START OT 0???
-        # tempos sampled on instruments grids go to instrument heads and z sequencing happens again for each instrument (why? not needed there)
-
-        # generate latent and derived latent parameters (tempo, unstruments used, instrument activation).
-        # think about adding more for auxiliary loss and latent training
-
         batch_size = len(model_inputs["bar_tempos"])
         if control_tokens is not None:
             mu, logvar = self.latent_prior_net(self.control_encoder(control_tokens))
@@ -85,31 +77,16 @@ class Conductor(nn.Module):
             mu = mu.repeat(batch_size, 1)
             logvar = logvar.repeat(batch_size, 1)
 
-        print("shape of bar tempos:", model_inputs["bar_tempos"].shape)
-
         z_sequence = sample_z_sequence_from_tempo_changes(
             mu, logvar, model_inputs["bar_tempos"]
         )
-        # TRAIN ONLY LATENT USING AUX OUTPUT AS A FIRST STEP
 
-        # THEN START 100% TEACHER FORCING AND GRADUALLY SHIFT TO GENERATIVE LOSS WITH PERCEPTUAL LOSS
-
-        # Infer tempro from global latent vector
-
-        print("shape of z_sequence:", z_sequence.shape)
-        tempos_pred = self.tempo_head(z_sequence).squeeze(-1)  # (batch, total_bars)
+        tempos_pred = self.tempo_head(z_sequence).squeeze(-1)
 
         # Infer used instruments
         instruments_counts, instruments_counts_logits = self.used_in_piece_head(
             z_sequence.mean(dim=1)
         )
-
-        print("inst counts logits shape: ", instruments_counts_logits.shape)
-        print("inst counts shape: ", instruments_counts.shape)
-
-        print("track mask shape: ", model_inputs["track_mask"].shape)
-
-        # during inference build instance mask to maks activation
 
         # Apply bar embedding to latent vector. The total bar is sequence of unique bars
         bar_sin, bar_cos = self.bar_embedding(
@@ -122,10 +99,6 @@ class Conductor(nn.Module):
         instrument_activation_logits = self.activation_head(
             z_bar
         )  # (batch, total_bars, num_instruments * max_instrument_instances)
-
-        # USE HARD MASKING Of INSTRUMENTS BY UNSTRUMENTS_USED DURING INFERENCE
-        # USE CONSISTENCY LOSS TO JOITNLY TRAIN USED INST AND ACTIVATION
-        # ADD WEIGHT TO INSTRUMENT ACTIVATION LOSS FROM INSTRUMENTS_USED
 
         return {
             "tempos": tempos_pred,
