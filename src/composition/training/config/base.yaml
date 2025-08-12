@@ -1,5 +1,4 @@
 device: cuda
-#num_workers: 4
 num_workers: 4
 
 num_instruments: 129 # 128 GM + 1 for drums

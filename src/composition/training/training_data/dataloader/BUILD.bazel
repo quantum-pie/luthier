@@ -1,28 +1,14 @@
 load("@rules_python//python:defs.bzl", "py_library", "py_test")
 
 py_library(
-    name = "supervised_loader",
+    name = "midi_dataset_loader",
     srcs = [
         "base_loader.py",
-        "supervised_loader.py",
+        "midi_dataset_loader.py",
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//src/composition/midi:tokenizer",
-        "//src/composition/midi:velocity_quantizer",
-        "@pypi//numpy",
-        "@pypi//torch",
-    ],
-)
-
-py_library(
-    name = "unsupervised_loader",
-    srcs = [
-        "base_loader.py",
-        "unsupervised_loader.py",
-    ],
-    visibility = ["//visibility:public"],
-    deps = [
+        ":utils",
         "//src/composition/midi:tokenizer",
         "//src/composition/midi:velocity_quantizer",
         "@pypi//numpy",

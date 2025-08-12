@@ -3,6 +3,13 @@ import torch.nn.functional as F
 from scipy.optimize import linear_sum_assignment
 
 
+def masked_mean_bce_logits(logits, targets, mask, dim):
+    # Assumes mask.sum(dim=dim) > 0 everywhere
+    loss = F.binary_cross_entropy_with_logits(logits, targets, reduction="none")
+    loss = loss * mask
+    return loss.sum(dim=dim) / mask.sum(dim=dim)
+
+
 def instrument_activation_loss(pred, target, dense_mask=None):
     """
     Compute permutation-invariant BCE loss across instrument instances using the Hungarian algorithm.
@@ -23,7 +30,7 @@ def instrument_activation_loss(pred, target, dense_mask=None):
 
     device = pred.device
     total_loss = torch.tensor(0.0, device=device)
-    total_pairs = 0
+    blocks = 0
 
     for b in range(B):
         for p in range(P):
@@ -35,51 +42,43 @@ def instrument_activation_loss(pred, target, dense_mask=None):
             else:
                 mask_block = torch.ones_like(pred_block, dtype=torch.bool)
 
-            # Compute cost matrix [I, I]
+            used_idx = mask_block.any(dim=0).nonzero(as_tuple=False).squeeze(-1)
+            K = used_idx.numel()
+            if K == 0:
+                continue
+
+            pred_block_filtered = pred_block[:, used_idx].float()  # [T, K]
+            target_block_filtered = target_block[:, used_idx].float()  # [T, K]
+            mask_block_filtered = mask_block[:, used_idx]  # [T, K]
+
+            # Build K×K costs (vectorized over T, K, K)
+            mask_i = mask_block_filtered.unsqueeze(2)  # [T, K, 1]
+            mask_j = mask_block_filtered.unsqueeze(1)  # [T, 1, K]
+            mask_ij = mask_i & mask_j  # [T, K, K] — assumed non-empty per (i,j)
+
+            X = pred_block_filtered.unsqueeze(2).expand(-1, -1, K)  # [T, K, K]
+            Y = target_block_filtered.unsqueeze(1).expand(-1, K, -1)  # [T, K, K]
+
             with torch.no_grad():
-                used_idx = mask_block.any(dim=0).nonzero(as_tuple=False).squeeze(-1)
-                num_used_idx = used_idx.numel()
-                if num_used_idx == 0:
-                    continue
+                cost = masked_mean_bce_logits(X, Y, mask_ij, dim=0)  # [K, K]
+                row_idx, col_idx = linear_sum_assignment(cost.detach().cpu().numpy())
+                row_idx = torch.as_tensor(row_idx, device=device)
+                col_idx = torch.as_tensor(col_idx, device=device)
 
-                cost = torch.zeros((num_used_idx, num_used_idx), device=device)
-                for i in range(num_used_idx):
-                    for j in range(num_used_idx):
-                        idx_i = used_idx[i]
-                        idx_j = used_idx[j]
-                        pred_vec = pred_block[:, idx_i]
-                        target_vec = target_block[:, idx_j]
-                        valid_mask = mask_block[:, idx_i] & mask_block[:, idx_j]  # [T]
+            # Recompute matched BCE with grads, vectorized over T and K
+            pred_block_matched = pred_block_filtered[:, row_idx]  # [T, K]
+            target_block_matched = target_block_filtered[:, col_idx]  # [T, K]
+            mask_matched = (
+                mask_block_filtered[:, row_idx] & mask_block_filtered[:, col_idx]
+            )  # [T, K] — assumed non-empty per column
 
-                        cost[i, j] = F.binary_cross_entropy_with_logits(
-                            pred_vec[valid_mask],
-                            target_vec[valid_mask].float(),
-                            reduction="mean",
-                        )
+            per_col = masked_mean_bce_logits(
+                pred_block_matched, target_block_matched, mask_matched, dim=0
+            )  # [K]
+            total_loss = total_loss + per_col.mean()
+            blocks += 1
 
-                row_ind, col_ind = linear_sum_assignment(cost.cpu().numpy())
-                row_ind = torch.as_tensor(row_ind, device=device)
-                col_ind = torch.as_tensor(col_ind, device=device)
-
-            # Accumulate matched BCE losses
-            for i, j in zip(row_ind.tolist(), col_ind.tolist()):
-                idx_i = used_idx[i]
-                idx_j = used_idx[j]
-                pred_vec = pred_block[:, idx_i]
-                target_vec = target_block[:, idx_j]
-                valid = mask_block[:, idx_i] & mask_block[:, idx_j]
-                total_loss = total_loss + F.binary_cross_entropy_with_logits(
-                    pred_vec[valid],
-                    target_vec[valid].float(),
-                    reduction="mean",
-                )
-                total_pairs += 1
-
-    return (
-        total_loss / total_pairs
-        if total_pairs > 0
-        else torch.tensor(0.0, device=pred.device)
-    )
+    return total_loss / blocks if blocks > 0 else torch.tensor(0.0, device=device)
 
 
 def generate_instrument_activation_targets(
