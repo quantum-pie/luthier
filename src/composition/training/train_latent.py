@@ -1,5 +1,7 @@
 import logging
 import pathlib
+from torch.utils.tensorboard import SummaryWriter
+from transformers import get_cosine_schedule_with_warmup
 
 from src.composition.training.config.config import load_config
 from src.composition.model.conductor_model import Conductor
@@ -44,6 +46,17 @@ from tqdm import tqdm
 from src.composition.game_genres import GameGenres
 from src.composition.game_moods import GameMoods
 
+logger = logging.getLogger(__name__)
+
+
+def kl_anneal_weight(step, beta_max, warmup_steps, total_steps):
+    if step < warmup_steps:
+        return 0.0
+    elif step < total_steps:
+        return beta_max * (step - warmup_steps) / (total_steps - warmup_steps)
+    else:
+        return beta_max
+
 
 @click.command()
 @click.option(
@@ -52,9 +65,16 @@ from src.composition.game_moods import GameMoods
 @click.option(
     "--use-unsupervised", is_flag=True, help="Use unsupervised dataset for training"
 )
+@click.option(
+    "--output-dir",
+    required=True,
+    type=pathlib.Path,
+    help="Directory to store model checkpoints",
+)
 def cli(
     use_supervised,
     use_unsupervised,
+    output_dir,
 ):
     if use_supervised and use_unsupervised:
         raise ValueError(
@@ -90,9 +110,10 @@ def cli(
         shuffle=training_config["dataloader"]["shuffle"],
         num_workers=training_config["num_workers"],
         collate_fn=collate_fn,
+        pin_memory=True,
     )
 
-    print("Loaded datasets:", len(dataset))
+    logger.info(f"Loaded datasets of size: {len(dataset)}")
 
     device = training_config["device"]
     if device == "cuda" and not torch.cuda.is_available():
@@ -126,25 +147,29 @@ def cli(
         weight_decay=weight_decay,
     )
 
+    # Define training steps
+    total_steps = training_config["training"]["epochs"] * len(dataloader)
+    warmup_steps = int(0.1 * total_steps)  # 10% warmup
+
+    # Cosine scheduler with warmup
+    scheduler = get_cosine_schedule_with_warmup(
+        optimizer, num_warmup_steps=warmup_steps, num_training_steps=total_steps
+    )
+
+    writer = SummaryWriter(log_dir=output_dir / "tensorboard")
+
     # Training loop
     # TODO: Add more losses when supervised dataset is used
     model.train()
     for epoch in range(training_config["training"]["epochs"]):
         total_loss = 0.0
-        for batch in tqdm(
-            dataloader,
+        for i, batch in tqdm(
+            enumerate(dataloader),
             desc=f"Epoch {epoch + 1}/{training_config["training"]["epochs"]}",
         ):
-            print("Processing batch")
             inputs = prepare_batch_for_model(batch)
             inputs = {k: v.to(device) for k, v in inputs.items()}
-            optimizer.zero_grad()
             outputs = model(inputs)
-
-            print("got outputs", outputs.keys())
-
-            ############################## INVESTIGATE HERE ##############################
-            # /home/quantum-pie/Projects/Luthier/datasets/lakh/lmd_full/c/cab976b8b9901f4d9bf49e1d86173a56.mid
 
             pred_tempos = outputs["tempos"]
             pred_instrument_counts_logits = outputs["instrument_counts_logits"]
@@ -192,8 +217,6 @@ def cli(
                 inputs["global_attention_mask"].unsqueeze(-1).unsqueeze(-1)
             ).to(device)
 
-            print("att mask device", attention_mask_exp.device)
-
             # Compute losses
             tempo_loss_array = tempo_loss(pred_tempos, target_tempos)
             tempo_loss_value = tempo_loss_array[inputs["global_attention_mask"]].mean()
@@ -212,19 +235,54 @@ def cli(
             )
 
             latent_loss = (
-                -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+                -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1)
             ).mean()
+
+            step_idx = epoch * len(dataloader) + i
+
+            beta = kl_anneal_weight(
+                step=step_idx,
+                beta_max=training_config["loss"]["kl_max_weight"],
+                warmup_steps=warmup_steps,
+                total_steps=total_steps,
+            )
 
             # Combine losses
             loss = (
                 tempo_loss_value
                 + instrument_counts_loss_value
                 + instrument_activation_loss_value
-                + latent_loss
+                + beta * latent_loss
             )
             loss.backward()
             optimizer.step()
+            scheduler.step()
+            optimizer.zero_grad()
             total_loss += loss.item()
+
+            writer.add_scalar("Tempo Loss", tempo_loss_value.item(), step_idx)
+
+            writer.add_scalar(
+                "Instrument Counts Loss", instrument_counts_loss_value.item(), step_idx
+            )
+
+            writer.add_scalar(
+                "Instrument Activation Loss",
+                instrument_activation_loss_value.item(),
+                step_idx,
+            )
+
+            writer.add_scalar("KL divergence Loss", latent_loss.item(), step_idx)
+            writer.add_scalar("Total Loss", loss.item(), step_idx)
+
+        torch.save(
+            {
+                "model_state_dict": model.state_dict(),
+                "optimizer_state_dict": optimizer.state_dict(),
+                "loss": loss.item(),
+            },
+            output_dir / f"checkpoint_{epoch}.pth",
+        )
 
 
 if __name__ == "__main__":

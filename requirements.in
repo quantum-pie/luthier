@@ -27,3 +27,4 @@ requests
 einops
 huggingface-hub
 transformers
+tensorboard
