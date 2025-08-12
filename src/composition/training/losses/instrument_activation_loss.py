@@ -12,11 +12,17 @@ def instrument_activation_loss(pred, target, dense_mask=None):
         target:      [B, T, P, I] — binary targets
         dense_mask:  [B, T, P, I] — boolean mask for valid positions (optional)
 
+        B is the batch size,
+        T is the number of time steps (bars),
+        P is the number of programs (instruments),
+        I is the number of instances per program.
     Returns:
         scalar averaged loss
     """
     B, T, P, I = pred.shape
-    total_loss = 0.0
+
+    device = pred.device
+    total_loss = torch.tensor(0.0, device=device)
     total_pairs = 0
 
     for b in range(B):
@@ -36,7 +42,7 @@ def instrument_activation_loss(pred, target, dense_mask=None):
                 if num_used_idx == 0:
                     continue
 
-                cost = torch.zeros((num_used_idx, num_used_idx), device=pred.device)
+                cost = torch.zeros((num_used_idx, num_used_idx), device=device)
                 for i in range(num_used_idx):
                     for j in range(num_used_idx):
                         idx_i = used_idx[i]
@@ -52,10 +58,21 @@ def instrument_activation_loss(pred, target, dense_mask=None):
                         )
 
                 row_ind, col_ind = linear_sum_assignment(cost.cpu().numpy())
+                row_ind = torch.as_tensor(row_ind, device=device)
+                col_ind = torch.as_tensor(col_ind, device=device)
 
             # Accumulate matched BCE losses
-            for i, j in zip(row_ind, col_ind):
-                total_loss += cost[i, j]
+            for i, j in zip(row_ind.tolist(), col_ind.tolist()):
+                idx_i = used_idx[i]
+                idx_j = used_idx[j]
+                pred_vec = pred_block[:, idx_i]
+                target_vec = target_block[:, idx_j]
+                valid = mask_block[:, idx_i] & mask_block[:, idx_j]
+                total_loss = total_loss + F.binary_cross_entropy_with_logits(
+                    pred_vec[valid],
+                    target_vec[valid].float(),
+                    reduction="mean",
+                )
                 total_pairs += 1
 
     return (
@@ -68,6 +85,21 @@ def instrument_activation_loss(pred, target, dense_mask=None):
 def generate_instrument_activation_targets(
     bar_activations, track_mask, program_ids, num_programs, max_instances
 ):
+    """
+    Generate binary targets for instrument activation based on bar activations and program IDs.
+    Args:
+        bar_activations: [B, T, L] — binary activation matrix for bars
+        track_mask:      [B, T] — mask indicating valid tracks
+        program_ids:     [B, T] — program IDs for each track
+        num_programs:    int — total number of programs (instruments)
+        max_instances:   int — maximum number of instances per program
+
+        B is the batch size,
+        T is the number of tracks,
+        L is the number of time steps (bars).
+    Returns:
+        [B, L, num_programs, max_instances] — binary targets for instrument activation
+    """
     B, T, L = bar_activations.shape
 
     valid_mask = track_mask & (program_ids >= 0)

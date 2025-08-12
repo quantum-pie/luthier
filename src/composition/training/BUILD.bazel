@@ -39,7 +39,9 @@ py_binary(
         "@bazel_tools//tools/python/runfiles",
         "@pypi//click",
         "@pypi//numpy",
+        "@pypi//tensorboard",
         "@pypi//torch",
         "@pypi//tqdm",
+        "@pypi//transformers",
     ],
 )

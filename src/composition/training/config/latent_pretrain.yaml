@@ -6,10 +6,10 @@ datasets:
   - lakh_full
 
 training:
-  epochs: 100
+  epochs: 1
 
 dataloader:
-  batch_size: 256
+  batch_size: 128
   shuffle: true
 
 optimizer:
@@ -19,5 +19,6 @@ optimizer:
 
 loss:
   independent_instrument_activation_supervision: True
+  kl_max_weight: 0.05
 
 

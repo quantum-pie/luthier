@@ -46,3 +46,9 @@ py_library(
     deps = [":selective_scan_cuda"],
 )
 ```
+# Tensorboard
+
+```
+source .venv/bin/activate
+tensorboard --logdir=/PATH/TO/LOGDIR
+```
