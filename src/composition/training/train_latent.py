@@ -11,11 +11,8 @@ from src.composition.training.training_data.dataloader.utils import (
 )
 import torch
 from torch.utils.data import DataLoader, ConcatDataset
-from src.composition.training.training_data.dataloader.supervised_loader import (
-    SupervisedMIDILoader,
-)
-from src.composition.training.training_data.dataloader.unsupervised_loader import (
-    UnsupervisedMIDILoader,
+from src.composition.training.training_data.dataloader.midi_dataset_loader import (
+    MIDIDatasetLoader,
 )
 
 from src.composition.training.losses.instrument_activation_loss import (
@@ -71,10 +68,16 @@ def kl_anneal_weight(step, beta_max, warmup_steps, total_steps):
     type=pathlib.Path,
     help="Directory to store model checkpoints",
 )
+@click.option(
+    "--dataset-cache-dir",
+    type=pathlib.Path,
+    help="Directory to cache dataset files",
+)
 def cli(
     use_supervised,
     use_unsupervised,
     output_dir,
+    dataset_cache_dir=None,
 ):
     if use_supervised and use_unsupervised:
         raise ValueError(
@@ -95,11 +98,8 @@ def cli(
     datasets = []
     for dataset_name in training_config["datasets"]:
         dataset_files = get_dataset_files(dataset_name, r)
-        dataset = (
-            SupervisedMIDILoader(training_config, dataset_files)
-            if use_supervised
-            else UnsupervisedMIDILoader(training_config, dataset_files)
-        )
+        cache_dir = dataset_cache_dir / dataset_name if dataset_cache_dir else None
+        dataset = MIDIDatasetLoader(training_config, dataset_files, cache_dir)
         datasets.append(dataset)
 
     dataset = ConcatDataset(datasets)
@@ -119,16 +119,12 @@ def cli(
     if device == "cuda" and not torch.cuda.is_available():
         raise RuntimeError("CUDA is not available. Please check your setup.")
 
-    control_vocab_size = {
-        "genre": len(GameGenres),
-        "mood": len(GameMoods),
-    }
-
     # Initialize model
     model = Conductor(
         training_config["model"]["latent_dim"],
         training_config["model"]["control_embed_dim"],
-        control_vocab_size,
+        len(GameGenres),
+        len(GameMoods),
         training_config["num_instruments"],
         training_config["max_instrument_instances"],
     )
@@ -167,9 +163,22 @@ def cli(
             enumerate(dataloader),
             desc=f"Epoch {epoch + 1}/{training_config["training"]["epochs"]}",
         ):
-            inputs = prepare_batch_for_model(batch)
+            optimizer.zero_grad(set_to_none=True)
+
+            inputs_and_control = prepare_batch_for_model(batch)
+            inputs = inputs_and_control["input"]
+
             inputs = {k: v.to(device) for k, v in inputs.items()}
-            outputs = model(inputs)
+
+            if use_unsupervised:
+                outputs = model(inputs)
+            else:
+                control_tokens = inputs_and_control["control"]
+                assert (
+                    control_tokens is not None
+                ), "Control tokens must be provided for supervised training."
+                control_tokens = {k: v.to(device) for k, v in control_tokens.items()}
+                outputs = model(inputs, control_tokens)
 
             pred_tempos = outputs["tempos"]
             pred_instrument_counts_logits = outputs["instrument_counts_logits"]
@@ -177,45 +186,46 @@ def cli(
             mu = outputs["latent_mu"]
             logvar = outputs["latent_logvar"]
 
-            # Generate targets
-            target_tempos = generate_tempo_targets(inputs["bar_tempos"]).to(device)
+            with torch.no_grad():
+                # Generate targets
+                target_tempos = generate_tempo_targets(inputs["bar_tempos"]).to(device)
 
-            target_instrument_counts = generate_instrument_counts_targets(
-                inputs["track_mask"],
-                inputs["program_ids"],
-                training_config["num_instruments"],
-            ).to(device)
+                target_instrument_counts = generate_instrument_counts_targets(
+                    inputs["track_mask"],
+                    inputs["program_ids"],
+                    training_config["num_instruments"],
+                ).to(device)
 
-            target_instrument_activation = generate_instrument_activation_targets(
-                inputs["bar_activations"],
-                inputs["track_mask"],
-                inputs["program_ids"],
-                training_config["num_instruments"],
-                training_config["max_instrument_instances"],
-            ).to(device)
-
-            instance_mask = (
-                generate_instance_mask_from_ground_truth(
+                target_instrument_activation = generate_instrument_activation_targets(
+                    inputs["bar_activations"],
                     inputs["track_mask"],
                     inputs["program_ids"],
                     training_config["num_instruments"],
                     training_config["max_instrument_instances"],
                 ).to(device)
-                if training_config["loss"][
-                    "independent_instrument_activation_supervision"
-                ]
-                else generate_instance_mask_from_logits(
-                    pred_instrument_counts_logits,
+
+                instance_mask = (
+                    generate_instance_mask_from_ground_truth(
+                        inputs["track_mask"],
+                        inputs["program_ids"],
+                        training_config["num_instruments"],
+                        training_config["max_instrument_instances"],
+                    ).to(device)
+                    if training_config["loss"][
+                        "independent_instrument_activation_supervision"
+                    ]
+                    else generate_instance_mask_from_logits(
+                        pred_instrument_counts_logits.detach(),
+                    ).to(device)
+                )
+
+                # Unsqueeze mask over the bars
+                instance_mask_exp = instance_mask.unsqueeze(1)
+
+                # Unsqueeze attention over the instrumetns and instances
+                attention_mask_exp = (
+                    inputs["global_attention_mask"].unsqueeze(-1).unsqueeze(-1)
                 ).to(device)
-            )
-
-            # Unsqueeze mask over the bars
-            instance_mask_exp = instance_mask.unsqueeze(1)
-
-            # Unsqueeze attention over the instrumetns and instances
-            attention_mask_exp = (
-                inputs["global_attention_mask"].unsqueeze(-1).unsqueeze(-1)
-            ).to(device)
 
             # Compute losses
             tempo_loss_array = tempo_loss(pred_tempos, target_tempos)
@@ -257,7 +267,6 @@ def cli(
             loss.backward()
             optimizer.step()
             scheduler.step()
-            optimizer.zero_grad()
             total_loss += loss.item()
 
             writer.add_scalar("Tempo Loss", tempo_loss_value.item(), step_idx)
@@ -286,5 +295,5 @@ def cli(
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.ERROR)
     cli()

@@ -21,7 +21,8 @@ class Conductor(nn.Module):
         self,
         latent_dim,
         control_embed_dim,
-        control_vocab_size,
+        genre_vocab_size,
+        mood_vocab_size,
         num_instruments=129,  # 128 GM + 1 for drums
         max_instrument_instances=10,
     ):
@@ -30,7 +31,7 @@ class Conductor(nn.Module):
         self.max_instrument_instances = max_instrument_instances
 
         self.control_encoder = ControlEncoder(
-            control_vocab_size, control_embed_dim, latent_dim
+            genre_vocab_size, mood_vocab_size, control_embed_dim, latent_dim
         )
         self.latent_prior_net = LatentPriorNet(latent_dim)
 
@@ -70,7 +71,14 @@ class Conductor(nn.Module):
     ):
         batch_size = len(model_inputs["bar_tempos"])
         if control_tokens is not None:
-            mu, logvar = self.latent_prior_net(self.control_encoder(control_tokens))
+            mu, logvar = self.latent_prior_net(
+                self.control_encoder(
+                    control_tokens["genre_ids"],
+                    control_tokens["genre_mask"],
+                    control_tokens["mood_ids"],
+                    control_tokens["mood_mask"],
+                )
+            )
         else:
             # If no control tokens, use default prior
             mu, logvar = self.latent_prior_net()
@@ -84,9 +92,7 @@ class Conductor(nn.Module):
         tempos_pred = self.tempo_head(z_sequence).squeeze(-1)
 
         # Infer used instruments
-        instruments_counts, instruments_counts_logits = self.used_in_piece_head(
-            z_sequence.mean(dim=1)
-        )
+        _, instruments_counts_logits = self.used_in_piece_head(z_sequence.mean(dim=1))
 
         # Apply bar embedding to latent vector. The total bar is sequence of unique bars
         bar_sin, bar_cos = self.bar_embedding(

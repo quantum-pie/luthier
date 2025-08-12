@@ -34,20 +34,23 @@ def test_collate_fn():
         velocity_quantizer=velocity_quantizer, max_instrument_instances=10
     )
 
-    batch = []
+    input_and_control_batch = []
     max_tracks = 0
-    # max_bars = 0
     for test_file_path in test_file_paths:
         encode_result = tokenizer.encode(str(test_file_path))
         assert encode_result is not None, "Failed to encode"
 
         max_tracks = max(max_tracks, len(encode_result["tracks"]))
-        batch.append(encode_result)
 
-    collated = collate_fn(batch)
-    model_input = prepare_batch_for_model(collated)
+        # TODO: Add control input
+        input_and_control_batch.append({"input": encode_result, "control": None})
 
-    assert model_input is not None, "Failed to prepare batch for model"
+    collated = collate_fn(input_and_control_batch)
+    model_input_and_control = prepare_batch_for_model(collated)
+
+    assert model_input_and_control is not None, "Failed to prepare batch for model"
+
+    model_input = model_input_and_control["input"]
 
     # Per-song per-track sequences
     assert model_input["pitch_tokens"].shape == (
@@ -97,7 +100,7 @@ def test_collate_fn():
     ), "Global attention mask shape mismatch"
 
     for i in range(len(test_file_paths)):
-        encoded = batch[i]
+        encoded = input_and_control_batch[i]["input"]
         model_input_i = {key: value[i] for key, value in model_input.items()}
 
         bar_boundaries_length = min(len(encoded["bar_boundaries"]), MAX_BARS)
