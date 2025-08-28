@@ -34,6 +34,9 @@ class LatentInterpolator:
             self.z_new = new_z
             self.transition_start_bar = current_bar_pos
 
+    def is_initialized(self):
+        return self.z_old is not None
+
     def get_current_z(self, bar_pos):
         """
         Get the current interpolated z_global at a given bar position.

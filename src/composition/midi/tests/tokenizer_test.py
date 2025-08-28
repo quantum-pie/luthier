@@ -1,6 +1,7 @@
 import bisect
 import pathlib
 import sys
+import logging
 from src.composition.midi.tokenizer import (
     DRUMS_PROGRAM_ID,
     MultiTrackMidiTokenizer,
@@ -84,6 +85,8 @@ def test_tokenized_data_reconstruction():
     invalid_test_file_paths = [
         pathlib.Path(r.Rlocation(location))
         for location in [
+            "_main/datasets/lakh/lmd_full/b/bd10b9641eade6e68541bb3ba86b4109.mid",
+            "_main/datasets/lakh/lmd_full/7/7ee21e3ccb026b69d7ad03fc0d807544.mid",
             "_main/datasets/lakh/lmd_full/d/d142de24c32fd5e117bf9d0c2f0e94cd.mid",
             "_main/datasets/lakh/lmd_full/f/fba0fdf6553c7ec76b1c5ed8d2d92642.mid",
         ]

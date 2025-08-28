@@ -137,8 +137,8 @@ def test_collate_fn():
                 ), f"Track mask for song {i}, track {track_idx} should be 0"
 
                 assert (
-                    model_input_i["program_ids"][track_idx] == PAD_TRACK_ID
-                ), f"Program ID for song {i}, track {track_idx} should be {PAD_TRACK_ID}"
+                    model_input_i["program_ids"][track_idx] == PAD_VALUE
+                ), f"Program ID for song {i}, track {track_idx} should be {PAD_VALUE}"
                 continue
 
             assert (

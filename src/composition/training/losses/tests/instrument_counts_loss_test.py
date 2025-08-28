@@ -1,9 +1,8 @@
 import sys
 import pytest
 from src.composition.training.losses.instrument_counts_loss import (
-    generate_instance_mask_from_ground_truth,
-    generate_instance_mask_from_logits,
     generate_instrument_counts_targets,
+    instrument_counts_loss,
 )
 import torch
 
@@ -38,93 +37,27 @@ def test_generate_instrument_counts_targets():
     assert torch.equal(counts, expected_counts)
 
 
-def test_generate_instance_mask_from_ground_truth():
-    # Test case 1: Basic case with one track per program
-    track_mask = torch.tensor([[True, False, True], [False, True, True]])
-    program_ids = torch.tensor([[0, 0, 1], [1, 2, 2]])
-    num_programs = 3
-    max_instances = 2
+def test_instrument_count_loss():
+    # Test case 1: Perfect prediction
+    rates = torch.tensor([[2.0, 3.0], [4.0, 5.0]])
+    target_counts = torch.tensor([[2, 3], [4, 5]])
 
-    expected_mask = torch.tensor(
-        [
-            [[True, False], [True, False], [False, False]],
-            [[False, False], [False, False], [True, True]],
-        ]
-    )
+    min_loss = instrument_counts_loss(rates, target_counts)
+    assert min_loss.shape == (2, 2)
 
-    mask = generate_instance_mask_from_ground_truth(
-        track_mask, program_ids, num_programs, max_instances
-    )
+    # Test case 2: Smaller rates
+    rates = torch.tensor([[1.0, 2.0], [3.0, 4.0]])
 
-    assert torch.equal(mask, expected_mask)
+    loss = instrument_counts_loss(rates, target_counts)
+    assert loss.shape == (2, 2)
+    assert torch.all(loss > min_loss)  # should be higher than perfect prediction
 
-    # Test case 2: No tracks
-    track_mask = torch.tensor([[False, False], [False, False]])
-    program_ids = torch.tensor([[0, 1], [1, 2]])
-    num_programs = 3
-    max_instances = 2
-    expected_mask = torch.tensor(
-        [
-            [[False, False], [False, False], [False, False]],
-            [[False, False], [False, False], [False, False]],
-        ]
-    )
+    # Test case 3: Higher rates
+    rates = torch.tensor([[3.0, 4.0], [5.0, 6.0]])
 
-    mask = generate_instance_mask_from_ground_truth(
-        track_mask, program_ids, num_programs, max_instances
-    )
-
-    assert torch.equal(mask, expected_mask)
-
-    # Test case 3: All tracks for one program
-    track_mask = torch.tensor([[True], [True]])
-    program_ids = torch.tensor([[1], [1]])
-    num_programs = 3
-    max_instances = 2
-
-    expected_mask = torch.tensor(
-        [
-            [[False, False], [True, False], [False, False]],
-            [[False, False], [True, False], [False, False]],
-        ]
-    )
-
-    mask = generate_instance_mask_from_ground_truth(
-        track_mask, program_ids, num_programs, max_instances
-    )
-
-    assert torch.equal(mask, expected_mask)
-
-
-def test_generate_instance_mask_from_logits():
-    # Test case 1: Basic case with one track per program
-    logits = torch.tensor(
-        [
-            [[0.9, 0.1, 0.0], [0.8, 0.2, 0.0], [0.0, 4.0, 0.0]],
-            [[0.0, 0.9, 0.1], [0.7, 0.3, 0.0], [0.0, 0.0, 0.9]],
-        ]
-    )  # Logits for 2 batches, 3 programs, 2 instances each
-    num_programs = 3
-    max_instances = 2
-
-    expected_mask = torch.tensor(
-        [
-            [[False, False], [False, False], [True, False]],
-            [[True, False], [False, False], [True, True]],
-        ]
-    )  # Expected mask for instances
-    mask = generate_instance_mask_from_logits(logits)
-
-    assert torch.equal(mask, expected_mask)
-
-    # Test case 2: No tracks
-    logits = torch.zeros((2, num_programs, max_instances + 1))
-    logits[:, :, 0] = 1.0  # All logits are the same, no instances
-    expected_mask = torch.zeros((2, num_programs, max_instances), dtype=torch.bool)
-
-    mask = generate_instance_mask_from_logits(logits)
-
-    assert torch.equal(mask, expected_mask)
+    loss = instrument_counts_loss(rates, target_counts)
+    assert loss.shape == (2, 2)
+    assert torch.all(loss > min_loss)  # should be higher than perfect prediction
 
 
 if __name__ == "__main__":

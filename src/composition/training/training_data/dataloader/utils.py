@@ -4,7 +4,6 @@ import tempfile
 import torch
 
 PAD_VALUE = 0
-PAD_TRACK_ID = -1
 MAX_BARS = 512
 MAX_SEQ_LEN = 4096
 MAX_TRACKS = 50
@@ -73,7 +72,7 @@ def collate_fn(input_and_control_batch):
         ]
 
         global_attention_mask_batch.append(
-            torch.tensor(global_attention_mask, dtype=torch.long)
+            torch.tensor(global_attention_mask, dtype=torch.bool)
         )
 
         sample_tracks = []
@@ -124,7 +123,7 @@ def collate_fn(input_and_control_batch):
                 "note_durations_beats": torch.tensor(
                     note_durations_beats, dtype=torch.float
                 ),
-                "attention_mask": torch.tensor(attention_mask, dtype=torch.long),
+                "attention_mask": torch.tensor(attention_mask, dtype=torch.bool),
                 "bar_activations": torch.tensor(bar_activations, dtype=torch.long),
             }
             sample_tracks.append(track_dict)
@@ -166,13 +165,13 @@ def prepare_batch_for_model(input_and_control_batch):
     bar_positions = init_track_tensor(torch.long)
     within_bar_positions = init_track_tensor(torch.float)
     note_durations_beats = init_track_tensor(torch.float)
-    attention_masks = init_track_tensor(torch.long)
+    attention_masks = init_track_tensor(torch.bool)
     bar_activations = torch.full(
         (batch_size, max_tracks, MAX_BARS), PAD_VALUE, dtype=torch.long
     )
 
     track_mask = torch.zeros((batch_size, max_tracks), dtype=torch.bool)
-    program_ids = torch.full((batch_size, max_tracks), PAD_TRACK_ID, dtype=torch.long)
+    program_ids = torch.full((batch_size, max_tracks), PAD_VALUE, dtype=torch.long)
 
     bar_boundaries = torch.stack(input_batch["bar_boundaries"], dim=0)
     bar_tempos = torch.stack(input_batch["bar_tempos"], dim=0)

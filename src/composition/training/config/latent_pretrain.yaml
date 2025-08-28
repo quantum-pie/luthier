@@ -9,7 +9,7 @@ training:
   epochs: 1
 
 dataloader:
-  batch_size: 128
+  batch_size: 4
   shuffle: true
 
 optimizer:
@@ -20,5 +20,3 @@ optimizer:
 loss:
   independent_instrument_activation_supervision: True
   kl_max_weight: 0.05
-
-

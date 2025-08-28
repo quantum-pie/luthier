@@ -1,24 +1,24 @@
 import torch
+import math
 
 
 class TempoNormalizer:
     def __init__(self, min_bpm=30, max_bpm=300):
-        self.min_bpm = min_bpm
-        self.max_bpm = max_bpm
-        self.range = max_bpm - min_bpm
+        self.min_bpm_log = math.log(min_bpm)
+        self.max_bpm_log = math.log(max_bpm)
+        self.bpm_log_range = self.max_bpm_log - self.min_bpm_log
 
     def normalize_bpm(self, bpm):
         """
-        Normalize BPM values to the [0, 1] range using PyTorch ops.
-        Input can be a scalar or tensor. Returns tensor.
+        Normalize BPM values to log scale.
         """
-        bpm = bpm.to(dtype=torch.float32)
-        norm = (bpm - self.min_bpm) / self.range
-        return torch.clamp(norm, 0.0, 1.0)
+        bpm = torch.log(bpm.to(dtype=torch.float32))
+        bpm = (bpm - self.min_bpm_log) / self.bpm_log_range
+        return bpm
 
     def unnormalize_bpm(self, normalized_bpm):
         """
         Convert normalized BPM values back to original BPM scale.
         """
         normalized_bpm = normalized_bpm.to(dtype=torch.float32)
-        return normalized_bpm * self.range + self.min_bpm
+        return torch.exp(normalized_bpm * self.bpm_log_range + self.min_bpm_log)
