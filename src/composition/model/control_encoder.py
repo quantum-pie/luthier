@@ -29,6 +29,9 @@ class ControlEncoder(nn.Module):
         self.mood_embedding = nn.Embedding(mood_vocab_size, control_embedding_dim)
 
         fused_in = 2 * control_embedding_dim
+
+        self.default_control = nn.Parameter(torch.randn(fused_in))
+
         self.fuser = nn.Sequential(
             nn.Linear(fused_in, latent_dim),
             nn.ReLU(),
@@ -67,3 +70,7 @@ class ControlEncoder(nn.Module):
         mood_vec = self._masked_mean(mood_ids, mood_mask, self.mood_embedding)  # [B, C]
         fused = torch.cat([genre_vec, mood_vec], dim=-1)  # [B, 2C]
         return self.fuser(fused)  # [B, D]
+
+    def encode_default(self) -> torch.FloatTensor:
+        """Returns a default fused control embedding of shape [1, D]."""
+        return self.fuser(self.default_control.unsqueeze(0))  # [1, D]

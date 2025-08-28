@@ -12,9 +12,9 @@ py_library(
 )
 
 py_library(
-    name = "instrument_activation_loss",
+    name = "instrument_density_loss",
     srcs = [
-        "instrument_activation_loss.py",
+        "instrument_density_loss.py",
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -52,9 +52,9 @@ py_test(
 )
 
 py_test(
-    name = "instrument_activation_loss_test",
+    name = "instrument_density_loss_test",
     timeout = "short",
-    srcs = ["tests/instrument_activation_loss_test.py"],
+    srcs = ["tests/instrument_density_loss_test.py"],
     data = [
         "//third_party/pytorch_cuda_libs:cuda_so_files",
     ],
@@ -62,7 +62,7 @@ py_test(
         "LD_LIBRARY_PATH": "third_party/pytorch_cuda_libs/lib",
     },
     deps = [
-        ":instrument_activation_loss",
+        ":instrument_density_loss",
         "@pypi//pytest",
     ],
 )

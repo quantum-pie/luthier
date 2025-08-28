@@ -1,0 +1,24 @@
+load("@rules_python//python:defs.bzl", "py_binary")
+
+py_binary(
+    name = "latent_runner",
+    srcs = ["latent_runner.py"],
+    data = [
+        "//third_party/pytorch_cuda_libs:cuda_so_files",
+    ],
+    env = {
+        "LD_LIBRARY_PATH": "third_party/pytorch_cuda_libs/lib",
+    },
+    main = "latent_runner.py",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//src/composition:game_genres",
+        "//src/composition:game_moods",
+        "//src/composition/midi:tempo_normalizer",
+        "//src/composition/model:conductor_model",
+        "//src/composition/training/config",
+        "@pypi//click",
+        "@pypi//numpy",
+        "@pypi//torch",
+    ],
+)

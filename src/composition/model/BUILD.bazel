@@ -1,4 +1,5 @@
 load("@rules_python//python:defs.bzl", "py_library")
+load("@rules_python//python:defs.bzl", "py_test")
 
 # py_library(
 #     name = "bar_cached_cross_attention",
@@ -29,8 +30,8 @@ py_library(
 )
 
 py_library(
-    name = "latent_prior_net",
-    srcs = ["latent_prior_net.py"],
+    name = "latent_net",
+    srcs = ["latent_net.py"],
     visibility = ["//visibility:public"],
     deps = ["@pypi//torch"],
 )
@@ -57,10 +58,72 @@ py_library(
         ":control_enconder",
         ":instrument_count_head",
         ":latent_interpolator",
-        ":latent_prior_net",
+        ":latent_net",
         ":utils",
         ":time_aware_embedding",
         #"//src/composition/midi:tokenizer",
+    ],
+)
+
+py_library(
+    name = "input_embeddings",
+    srcs = ["input_embeddings.py"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//src/composition/midi:tokenizer",
+        "@pypi//torch",
+    ],
+)
+
+py_test(
+    name = "input_embeddings_test",
+    timeout = "short",
+    srcs = ["tests/input_embeddings_test.py"],
+    data = [
+        "//third_party/pytorch_cuda_libs:cuda_so_files",
+    ],
+    env = {
+        "LD_LIBRARY_PATH": "third_party/pytorch_cuda_libs/lib",
+    },
+    deps = [
+        ":input_embeddings",
+        "//src/composition/midi:tokenizer",
+        "@pypi//pytest",
+        "@pypi//torch",
+    ],
+)
+
+py_test(
+    name = "control_encoder_test",
+    timeout = "short",
+    srcs = ["tests/control_encoder_test.py"],
+    data = [
+        "//third_party/pytorch_cuda_libs:cuda_so_files",
+    ],
+    env = {
+        "LD_LIBRARY_PATH": "third_party/pytorch_cuda_libs/lib",
+    },
+    deps = [
+        ":control_enconder",
+        "@pypi//pytest",
+        "@pypi//torch",
+    ],
+)
+
+py_test(
+    name = "time_aware_embedding_test",
+    timeout = "short",
+    srcs = ["tests/time_aware_embedding_test.py"],
+    data = [
+        "//third_party/pytorch_cuda_libs:cuda_so_files",
+    ],
+    env = {
+        "LD_LIBRARY_PATH": "third_party/pytorch_cuda_libs/lib",
+    },
+    deps = [
+        ":time_aware_embedding",
+        "@pypi//pytest",
+        "@pypi//torch",
     ],
 )
 
@@ -73,7 +136,7 @@ py_library(
 #         ":control_econder",
 #         ":instrument_count_head",
 #         ":latent_interpolator",
-#         ":latent_prior_net",
+#         ":latent_net",
 #         ":utils",
 #         "//src/composition/midi:tokenizer",
 #         # use mamba like in the tokenizer test

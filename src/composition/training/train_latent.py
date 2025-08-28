@@ -5,6 +5,7 @@ from transformers import get_cosine_schedule_with_warmup
 
 from src.composition.training.config.config import load_config
 from src.composition.model.conductor_model import Conductor
+from src.composition.model.input_embeddings import InputEmbeddings
 from src.composition.training.training_data.dataloader.utils import (
     collate_fn,
     prepare_batch_for_model,
@@ -15,16 +16,14 @@ from src.composition.training.training_data.dataloader.midi_dataset_loader impor
     MIDIDatasetLoader,
 )
 
-from src.composition.training.losses.instrument_activation_loss import (
-    generate_instrument_activation_targets,
-    instrument_activation_loss,
+from src.composition.training.losses.instrument_density_loss import (
+    generate_instrument_density_targets,
+    instrument_density_loss,
 )
 
 from src.composition.training.losses.instrument_counts_loss import (
     generate_instrument_counts_targets,
     instrument_counts_loss,
-    generate_instance_mask_from_logits,
-    generate_instance_mask_from_ground_truth,
 )
 
 from src.composition.training.losses.tempo_loss import (
@@ -40,6 +39,8 @@ from src.composition.training.dataset_resolver import get_dataset_files
 import click
 from tqdm import tqdm
 
+import numpy as np
+
 from src.composition.game_genres import GameGenres
 from src.composition.game_moods import GameMoods
 
@@ -53,6 +54,37 @@ def kl_anneal_weight(step, beta_max, warmup_steps, total_steps):
         return beta_max * (step - warmup_steps) / (total_steps - warmup_steps)
     else:
         return beta_max
+
+
+def kl_loss(mu_posterior, logvar_posterior, mu_prior, logvar_prior):
+    """
+    KL(q||p) where
+      q = N(mu_posterior, diag(exp(logvar_posterior)))
+      p = N(mu_prior,     diag(exp(logvar_prior)))
+
+    Args:
+        mu_posterior:   [B, D]
+        logvar_posterior: [B, D]
+        mu_prior:       [B, D]
+        logvar_prior:   [B, D]
+        reduction: "mean" | "sum" | "none"
+    Returns:
+        Scalar loss if reduction != "none", else per-sample KL [B]
+    """
+    # variances
+    var_post = torch.exp(logvar_posterior)
+    var_prior = torch.exp(logvar_prior)
+
+    # KL(q||p) per-dimension
+    # 0.5 * [ log(|Σ_p|/|Σ_q|) - D + tr(Σ_p^{-1} Σ_q) + (μ_p - μ_q)^T Σ_p^{-1} (μ_p - μ_q) ]
+    log_det_ratio = logvar_prior - logvar_posterior  # [B, D]
+    trace_term = var_post / var_prior  # [B, D]
+    mean_diff_sq = (mu_prior - mu_posterior).pow(2) / var_prior
+
+    kl_per_dim = log_det_ratio + trace_term + mean_diff_sq - 1.0
+    kl_per_sample = 0.5 * kl_per_dim.sum(dim=-1)  # [B]
+
+    return kl_per_sample
 
 
 @click.command()
@@ -95,6 +127,10 @@ def cli(
         "_main/src/composition/training/config/latent_pretrain.yaml", r
     )
 
+    device = training_config["device"]
+    if device == "cuda" and not torch.cuda.is_available():
+        raise RuntimeError("CUDA is not available. Please check your setup.")
+
     datasets = []
     for dataset_name in training_config["datasets"]:
         dataset_files = get_dataset_files(dataset_name, r)
@@ -110,25 +146,30 @@ def cli(
         shuffle=training_config["dataloader"]["shuffle"],
         num_workers=training_config["num_workers"],
         collate_fn=collate_fn,
-        pin_memory=True,
+        pin_memory=False,
     )
 
     logger.info(f"Loaded datasets of size: {len(dataset)}")
 
-    device = training_config["device"]
-    if device == "cuda" and not torch.cuda.is_available():
-        raise RuntimeError("CUDA is not available. Please check your setup.")
-
     # Initialize model
-    model = Conductor(
+    conductor_model = Conductor(
         training_config["model"]["latent_dim"],
         training_config["model"]["control_embed_dim"],
+        training_config["model"]["hidden_dim"],
         len(GameGenres),
         len(GameMoods),
         training_config["num_instruments"],
         training_config["max_instrument_instances"],
     )
-    model.to(device)
+    conductor_model.to(device)
+
+    input_embeddings_model = InputEmbeddings(
+        training_config["model"]["hidden_dim"],
+        training_config["vocab"]["pitch_vocab_size"],
+        training_config["vocab"]["velocity_vocab_size"],
+        training_config["num_instruments"],
+    )
+    input_embeddings_model.to(device)
 
     optimizer_name = training_config["optimizer"]["name"]
     learning_rate = training_config["optimizer"]["lr"]
@@ -138,7 +179,7 @@ def cli(
 
     # Initialize optimizer
     optimizer = optimizer_class(
-        model.parameters(),
+        list(conductor_model.parameters()) + list(input_embeddings_model.parameters()),
         lr=learning_rate,
         weight_decay=weight_decay,
     )
@@ -156,144 +197,158 @@ def cli(
 
     # Training loop
     # TODO: Add more losses when supervised dataset is used
-    model.train()
-    for epoch in range(training_config["training"]["epochs"]):
-        total_loss = 0.0
-        for i, batch in tqdm(
-            enumerate(dataloader),
-            desc=f"Epoch {epoch + 1}/{training_config["training"]["epochs"]}",
-        ):
-            optimizer.zero_grad(set_to_none=True)
+    conductor_model.train()
+    input_embeddings_model.train()
 
-            inputs_and_control = prepare_batch_for_model(batch)
-            inputs = inputs_and_control["input"]
+    try:
+        for epoch in range(training_config["training"]["epochs"]):
+            total_loss = 0.0
+            for i, batch in tqdm(
+                enumerate(dataloader),
+                desc=f"Epoch {epoch + 1}/{training_config["training"]["epochs"]}",
+            ):
+                optimizer.zero_grad(set_to_none=True)
+                inputs_and_control = prepare_batch_for_model(batch)
+                inputs = inputs_and_control["input"]
 
-            inputs = {k: v.to(device) for k, v in inputs.items()}
+                inputs = {k: v.to(device) for k, v in inputs.items()}
 
-            if use_unsupervised:
-                outputs = model(inputs)
-            else:
-                control_tokens = inputs_and_control["control"]
-                assert (
-                    control_tokens is not None
-                ), "Control tokens must be provided for supervised training."
-                control_tokens = {k: v.to(device) for k, v in control_tokens.items()}
-                outputs = model(inputs, control_tokens)
+                input_embeddings = input_embeddings_model(inputs)
+                if use_unsupervised:
+                    outputs = conductor_model(inputs, input_embeddings)
+                else:
+                    control_tokens = inputs_and_control["control"]
+                    assert (
+                        control_tokens is not None
+                    ), "Control tokens must be provided for supervised training."
+                    control_tokens = {
+                        k: v.to(device) for k, v in control_tokens.items()
+                    }
+                    outputs = conductor_model(inputs, input_embeddings, control_tokens)
 
-            pred_tempos = outputs["tempos"]
-            pred_instrument_counts_logits = outputs["instrument_counts_logits"]
-            pred_instrument_activation_logits = outputs["instrument_activation_logits"]
-            mu = outputs["latent_mu"]
-            logvar = outputs["latent_logvar"]
+                pred_tempos = outputs["tempos"]
+                pred_instrument_counts_rates = outputs["instrument_counts_rates"]
+                pred_instrument_density_logits = outputs["instrument_density_logits"]
 
-            with torch.no_grad():
-                # Generate targets
-                target_tempos = generate_tempo_targets(inputs["bar_tempos"]).to(device)
+                mu_prior = outputs["mu_prior"]
+                logvar_prior = outputs["logvar_prior"]
+                mu_posterior = outputs["mu_posterior"]
+                logvar_posterior = outputs["logvar_posterior"]
 
-                target_instrument_counts = generate_instrument_counts_targets(
-                    inputs["track_mask"],
-                    inputs["program_ids"],
-                    training_config["num_instruments"],
-                ).to(device)
+                with torch.no_grad():
+                    # Generate targets
+                    target_tempos = generate_tempo_targets(inputs["bar_tempos"]).to(
+                        device
+                    )
 
-                target_instrument_activation = generate_instrument_activation_targets(
-                    inputs["bar_activations"],
-                    inputs["track_mask"],
-                    inputs["program_ids"],
-                    training_config["num_instruments"],
-                    training_config["max_instrument_instances"],
-                ).to(device)
-
-                instance_mask = (
-                    generate_instance_mask_from_ground_truth(
+                    target_instrument_counts = generate_instrument_counts_targets(
                         inputs["track_mask"],
                         inputs["program_ids"],
                         training_config["num_instruments"],
-                        training_config["max_instrument_instances"],
                     ).to(device)
-                    if training_config["loss"][
-                        "independent_instrument_activation_supervision"
-                    ]
-                    else generate_instance_mask_from_logits(
-                        pred_instrument_counts_logits.detach(),
+
+                    target_instrument_density = generate_instrument_density_targets(
+                        inputs["bar_activations"],
+                        inputs["track_mask"],
+                        inputs["program_ids"],
+                        target_instrument_counts,
+                        training_config["num_instruments"],
                     ).to(device)
+
+                # Compute losses
+                tempo_loss_array = tempo_loss(pred_tempos, target_tempos)
+                tempo_loss_value = tempo_loss_array[
+                    inputs["global_attention_mask"]
+                ].mean()
+
+                instrument_counts_loss_value = instrument_counts_loss(
+                    pred_instrument_counts_rates, target_instrument_counts
+                ).mean()
+
+                full_mask = inputs["global_attention_mask"].unsqueeze(-1) & (
+                    target_instrument_counts > 0
+                ).unsqueeze(
+                    1
+                )  # [B, T, P]
+
+                instrument_density_loss_value = instrument_density_loss(
+                    pred_instrument_density_logits,
+                    target_instrument_density,
+                    target_instrument_counts,
+                )[full_mask].mean()
+
+                latent_loss = kl_loss(
+                    mu_posterior, logvar_posterior, mu_prior, logvar_prior
+                ).mean()
+
+                step_idx = epoch * len(dataloader) + i
+
+                beta = kl_anneal_weight(
+                    step=step_idx,
+                    beta_max=training_config["loss"]["kl_max_weight"],
+                    warmup_steps=warmup_steps,
+                    total_steps=total_steps,
                 )
 
-                # Unsqueeze mask over the bars
-                instance_mask_exp = instance_mask.unsqueeze(1)
+                # Combine losses
+                loss = (
+                    tempo_loss_value
+                    + instrument_counts_loss_value
+                    + instrument_density_loss_value
+                    + beta * latent_loss
+                )
 
-                # Unsqueeze attention over the instrumetns and instances
-                attention_mask_exp = (
-                    inputs["global_attention_mask"].unsqueeze(-1).unsqueeze(-1)
-                ).to(device)
+                loss.backward()
+                optimizer.step()
+                scheduler.step()
+                total_loss += loss.item()
 
-            # Compute losses
-            tempo_loss_array = tempo_loss(pred_tempos, target_tempos)
-            tempo_loss_value = tempo_loss_array[inputs["global_attention_mask"]].mean()
+                writer.add_scalar("Tempo Loss", tempo_loss_value.item(), step_idx)
 
-            instrument_counts_loss_value = instrument_counts_loss(
-                pred_instrument_counts_logits, target_instrument_counts
-            ).mean()
+                writer.add_scalar(
+                    "Instrument Counts Loss",
+                    instrument_counts_loss_value.item(),
+                    step_idx,
+                )
 
-            # Reshape pred_instrument_activation_logits to match target_instrument_activation
-            instrument_activation_loss_value = instrument_activation_loss(
-                pred_instrument_activation_logits.view(
-                    target_instrument_activation.shape
-                ),
-                target_instrument_activation,
-                instance_mask_exp & attention_mask_exp,
+                writer.add_scalar(
+                    "Instrument Density Loss",
+                    instrument_density_loss_value.item(),
+                    step_idx,
+                )
+
+                writer.add_scalar("KL divergence Loss", latent_loss.item(), step_idx)
+                writer.add_scalar("Total Loss", loss.item(), step_idx)
+
+                logger.info(
+                    f"Batch {i + 1}/{len(dataloader)} processed. Total loss: {total_loss / (i + 1)}"
+                )
+
+            torch.save(
+                {
+                    "conductor_model_state_dict": conductor_model.state_dict(),
+                    "input_embeddings_model_state_dict": input_embeddings_model.state_dict(),
+                    "optimizer_state_dict": optimizer.state_dict(),
+                    "loss": loss.item(),
+                    "config": training_config,
+                },
+                output_dir / f"checkpoint_{epoch}.pth",
             )
+    except KeyboardInterrupt:
+        logger.info("Training interrupted. Saving the last checkpoint.")
 
-            latent_loss = (
-                -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1)
-            ).mean()
-
-            step_idx = epoch * len(dataloader) + i
-
-            beta = kl_anneal_weight(
-                step=step_idx,
-                beta_max=training_config["loss"]["kl_max_weight"],
-                warmup_steps=warmup_steps,
-                total_steps=total_steps,
-            )
-
-            # Combine losses
-            loss = (
-                tempo_loss_value
-                + instrument_counts_loss_value
-                + instrument_activation_loss_value
-                + beta * latent_loss
-            )
-            loss.backward()
-            optimizer.step()
-            scheduler.step()
-            total_loss += loss.item()
-
-            writer.add_scalar("Tempo Loss", tempo_loss_value.item(), step_idx)
-
-            writer.add_scalar(
-                "Instrument Counts Loss", instrument_counts_loss_value.item(), step_idx
-            )
-
-            writer.add_scalar(
-                "Instrument Activation Loss",
-                instrument_activation_loss_value.item(),
-                step_idx,
-            )
-
-            writer.add_scalar("KL divergence Loss", latent_loss.item(), step_idx)
-            writer.add_scalar("Total Loss", loss.item(), step_idx)
-
-        torch.save(
-            {
-                "model_state_dict": model.state_dict(),
-                "optimizer_state_dict": optimizer.state_dict(),
-                "loss": loss.item(),
-            },
-            output_dir / f"checkpoint_{epoch}.pth",
-        )
+    torch.save(
+        {
+            "conductor_model_state_dict": conductor_model.state_dict(),
+            "input_embeddings_model_state_dict": input_embeddings_model.state_dict(),
+            "optimizer_state_dict": optimizer.state_dict(),
+            "loss": loss.item(),
+            "config": training_config,
+        },
+        output_dir / "model.pth",
+    )
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.ERROR)
+    logging.basicConfig(level=logging.INFO)
     cli()

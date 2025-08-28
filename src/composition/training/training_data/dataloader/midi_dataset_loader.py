@@ -1,10 +1,14 @@
 from pathlib import Path
 import pickle
+import logging
 from src.composition.midi.velocity_quantizer import VelocityQuantizer
 from src.composition.training.training_data.dataloader.base_loader import DatasetLoader
 from src.composition.midi.tokenizer import MultiTrackMidiTokenizer
 from src.composition.training.training_data.dataloader.utils import atomic_write
 import numpy as np
+
+
+logger = logging.getLogger(__name__)
 
 
 class MIDIDatasetLoader(DatasetLoader):
@@ -31,6 +35,7 @@ class MIDIDatasetLoader(DatasetLoader):
             cache_file = self.cache_dir / f"{idx}.pkl"
             if cache_file.exists():
                 with open(cache_file, "rb") as f:
+                    logger.debug(f"Loading cached data for index {idx}")
                     return pickle.load(f)
 
         tokenizer_result = self.tokenizer.encode(self.filepaths[idx])

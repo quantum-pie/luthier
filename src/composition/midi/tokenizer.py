@@ -25,6 +25,9 @@ class MultiTrackMidiTokenizer:
             for msg in track:
                 abs_tick += msg.time
                 if msg.type == "set_tempo":
+                    if msg.tempo == 0:
+                        logger.error("Tempo is set to 0, which is invalid")
+                        return None, None
                     tempo_events[abs_tick] = tempo2bpm(msg.tempo)
 
         if len(tempo_events) == 0:
@@ -42,6 +45,14 @@ class MultiTrackMidiTokenizer:
         return list(tempo_times), list(tempi)
 
     @staticmethod
+    def validate_time_signature(numerator, denominator):
+        if numerator < 1 or numerator > 64:
+            return False
+        if denominator not in [1, 2, 4, 8, 16, 32, 64]:
+            return False
+        return True
+
+    @staticmethod
     def parse_time_signatures(mid):
         time_sigs = {}
         for track in mid.tracks:
@@ -49,6 +60,13 @@ class MultiTrackMidiTokenizer:
             for msg in track:
                 abs_tick += msg.time
                 if msg.type == "time_signature":
+                    if not MultiTrackMidiTokenizer.validate_time_signature(
+                        msg.numerator, msg.denominator
+                    ):
+                        logger.error(
+                            f"Invalid time signature: {msg.numerator}/{msg.denominator}"
+                        )
+                        return None, None
                     time_sigs[abs_tick] = (msg.numerator, msg.denominator)
 
         if len(time_sigs) == 0:
@@ -131,19 +149,28 @@ class MultiTrackMidiTokenizer:
         return i, (beat_time - bar_start) / (bar_end - bar_start + 1e-9)
 
     def encode(self, midi_file_path):
+        logger.debug(f"Encoding MIDI file: {midi_file_path}")
         try:
             mid = MidiFile(midi_file_path)
-            max_tick = max(
-                msg.time
-                for track in mid.tracks
-                for msg in track
-                if hasattr(msg, "time")
-            )
-            if max_tick > MAX_TICK:
-                logger.error(f"MIDI file {midi_file_path} exceeds maximum tick limit")
-                return None
         except Exception as e:
             logger.error(f"Failed to read MIDI file {midi_file_path}: {e}")
+            return None
+
+        if mid.ticks_per_beat <= 0:
+            logger.error(f"Invalid ticks per beat in MIDI file {midi_file_path}")
+            return None
+
+        all_msg_ticks = [
+            msg.time for track in mid.tracks for msg in track if hasattr(msg, "time")
+        ]
+
+        if not all_msg_ticks:
+            logger.error(f"No messages with time found in MIDI file {midi_file_path}")
+            return None
+
+        max_tick = max(all_msg_ticks)
+        if max_tick > MAX_TICK:
+            logger.error(f"MIDI file {midi_file_path} exceeds maximum tick limit")
             return None
 
         tempo_times, tempi = MultiTrackMidiTokenizer.parse_tempo_map(mid)
@@ -218,6 +245,7 @@ class MultiTrackMidiTokenizer:
         all_note_ends = sorted(all_note_ends)
 
         latest_ts = max([all_note_ends[-1], tempo_times[-1], ts_times[-1]])
+
         beats = MultiTrackMidiTokenizer.generate_beat_ticks(
             0, latest_ts + mid.ticks_per_beat, mid.ticks_per_beat
         )
@@ -302,6 +330,10 @@ class MultiTrackMidiTokenizer:
 
             # sort by beat_position here
             track_grouped_data.append(new_data)
+
+        logger.debug(
+            f"Encoded {len(track_grouped_data)} tracks from MIDI file: {midi_file_path}"
+        )
 
         return {
             "tracks": track_grouped_data,
