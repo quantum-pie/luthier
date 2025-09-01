@@ -1,5 +1,4 @@
-load("@rules_python//python:defs.bzl", "py_library")
-load("@rules_python//python:defs.bzl", "py_test")
+load("@rules_python//python:defs.bzl", "py_library", "py_test")
 
 # py_library(
 #     name = "bar_cached_cross_attention",
@@ -59,9 +58,10 @@ py_library(
         ":instrument_count_head",
         ":latent_interpolator",
         ":latent_net",
-        ":utils",
         ":time_aware_embedding",
-        #"//src/composition/midi:tokenizer",
+        ":utils",
+        "@pypi//numpy",
+        "@pypi//torch",
     ],
 )
 
@@ -122,6 +122,28 @@ py_test(
     },
     deps = [
         ":time_aware_embedding",
+        "@pypi//pytest",
+        "@pypi//torch",
+    ],
+)
+
+py_test(
+    name = "conductor_model_test",
+    timeout = "short",
+    srcs = ["tests/conductor_model_test.py"],
+    data = [
+        "//third_party/pytorch_cuda_libs:cuda_so_files",
+    ],
+    env = {
+        "LD_LIBRARY_PATH": "third_party/pytorch_cuda_libs/lib",
+    },
+    deps = [
+        ":conductor_model",
+        ":control_enconder",
+        ":instrument_count_head",
+        ":latent_net",
+        ":time_aware_embedding",
+        ":utils",
         "@pypi//pytest",
         "@pypi//torch",
     ],

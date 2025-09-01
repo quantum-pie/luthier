@@ -55,7 +55,7 @@ class LatentInterpolator:
 
         # Compute interpolation factor α ∈ [0, 1]
         bar_offset = bar_pos - self.transition_start_bar
-        alpha = torch.clamp(torch.tensor(bar_offset / self.transition_duration), 0.0, 1.0)
+        alpha = torch.clamp(bar_offset / self.transition_duration, 0.0, 1.0)
 
         if self.smooth:
             alpha = 0.5 * (1 - torch.cos(math.pi * alpha))

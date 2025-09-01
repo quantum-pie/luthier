@@ -132,10 +132,10 @@ class Conductor(nn.Module):
         payload += b"V1"  # version tag for future-proofing
 
         payload += struct.pack("<cI", b"G", g.size)
-        payload += g.newbyteorder("<").tobytes()  # little-endian
+        payload += g.view(g.dtype.newbyteorder("<")).tobytes()  # little-endian
 
         payload += struct.pack("<cI", b"M", m.size)
-        payload += m.newbyteorder("<").tobytes()
+        payload += m.view(m.dtype.newbyteorder("<")).tobytes()
 
         return hashlib.sha256(payload).hexdigest()
 
