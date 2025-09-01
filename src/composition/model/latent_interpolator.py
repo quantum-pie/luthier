@@ -21,7 +21,7 @@ class LatentInterpolator:
 
         Args:
             new_z (Tensor): New z_global from new control tokens (shape: latent_dim)
-            current_bar_pos (float): Current bar index
+            current_bar_pos (Tensor): Current bar index
         """
         if self.z_old is None:
             # First-time init — no interpolation needed
@@ -42,7 +42,7 @@ class LatentInterpolator:
         Get the current interpolated z_global at a given bar position.
 
         Args:
-            bar_pos (float): Current bar index
+            bar_pos (Tensor): Current bar index
 
         Returns:
             Tensor: Interpolated latent vector
