@@ -43,9 +43,7 @@ class MidiTaggerApp:
         self.filename_label.pack(pady=5)
 
         # Metadata display
-        self.metadata_label = tk.Label(
-            frame, text="", width=60, justify="left", anchor="w"
-        )
+        self.metadata_label = tk.Label(frame, text="", width=60, justify="left", anchor="w")
         self.metadata_label.pack(pady=5)
 
         # Game description
@@ -58,18 +56,14 @@ class MidiTaggerApp:
 
         # Genre dropdown
         tk.Label(listboxes_frame, text="Genres:").grid(row=0, column=0)
-        self.genre_listbox = tk.Listbox(
-            listboxes_frame, selectmode="multiple", exportselection=False, height=20
-        )
+        self.genre_listbox = tk.Listbox(listboxes_frame, selectmode="multiple", exportselection=False, height=20)
         for g in GameGenres:
             self.genre_listbox.insert(tk.END, g.value)
         self.genre_listbox.grid(row=1, column=0, padx=5, pady=5)
 
         # Mood dropdown
         tk.Label(listboxes_frame, text="Moods:").grid(row=0, column=1)
-        self.mood_listbox = tk.Listbox(
-            listboxes_frame, selectmode="multiple", exportselection=False, height=20
-        )
+        self.mood_listbox = tk.Listbox(listboxes_frame, selectmode="multiple", exportselection=False, height=20)
         for m in GameMoods:
             self.mood_listbox.insert(tk.END, m.value)
         self.mood_listbox.grid(row=1, column=1, padx=5, pady=5)
@@ -81,24 +75,16 @@ class MidiTaggerApp:
         self.play_button = tk.Button(button_frame, text="Play", command=self.play_midi)
         self.play_button.grid(row=0, column=0, padx=5)
 
-        self.stop_button = tk.Button(
-            button_frame, text="Stop Music", command=self.stop_midi
-        )
+        self.stop_button = tk.Button(button_frame, text="Stop Music", command=self.stop_midi)
         self.stop_button.grid(row=0, column=1, padx=5)
 
-        self.keep_button = tk.Button(
-            button_frame, text="Keep", command=lambda: self.save_tag(True)
-        )
+        self.keep_button = tk.Button(button_frame, text="Keep", command=lambda: self.save_tag(True))
         self.keep_button.grid(row=0, column=2, padx=5)
 
-        self.discard_button = tk.Button(
-            button_frame, text="Discard", command=lambda: self.save_tag(False)
-        )
+        self.discard_button = tk.Button(button_frame, text="Discard", command=lambda: self.save_tag(False))
         self.discard_button.grid(row=0, column=3, padx=5)
 
-        self.load_button = tk.Button(
-            frame, text="Load MIDI Folder", command=self.load_folder
-        )
+        self.load_button = tk.Button(frame, text="Load MIDI Folder", command=self.load_folder)
         self.load_button.pack(pady=5)
 
     def load_folder(self):
@@ -127,9 +113,7 @@ class MidiTaggerApp:
                         if row:
                             already_tagged.add(row[0])
 
-            self.file_list = [
-                f for f in all_files if os.path.basename(f) not in already_tagged
-            ]
+            self.file_list = [f for f in all_files if os.path.basename(f) not in already_tagged]
             self.current_index = 0
             if self.file_list:
                 self.load_current_file()
@@ -209,17 +193,11 @@ class MidiTaggerApp:
     def save_tag(self, keep):
         if self.current_index < len(self.file_list):
             filename = os.path.basename(self.file_list[self.current_index])
-            selected_genres = [
-                self.genre_listbox.get(i) for i in self.genre_listbox.curselection()
-            ]
-            selected_moods = [
-                self.mood_listbox.get(i) for i in self.mood_listbox.curselection()
-            ]
+            selected_genres = [self.genre_listbox.get(i) for i in self.genre_listbox.curselection()]
+            selected_moods = [self.mood_listbox.get(i) for i in self.mood_listbox.curselection()]
 
             if keep and (not selected_genres or not selected_moods):
-                messagebox.showwarning(
-                    "Missing Data", "Please select both genre and mood before keeping."
-                )
+                messagebox.showwarning("Missing Data", "Please select both genre and mood before keeping.")
                 return
 
             tags_path = Path(self.folder) / "tags.csv"
@@ -254,9 +232,7 @@ class MidiTaggerApp:
 
 
 @click.command()
-@click.option(
-    "--sf2", type=click.Path(exists=True), help="Path to SoundFont (.sf2) file"
-)
+@click.option("--sf2", type=click.Path(exists=True), help="Path to SoundFont (.sf2) file")
 def cli(sf2):
     root = tk.Tk()
     app = MidiTaggerApp(root, soundfont_path=sf2)

@@ -37,21 +37,11 @@ class Lakh:
         return os.path.join(song_id[2], song_id[3], song_id[4], song_id)
 
     def song_id_to_metada_path(self, song_id: str):
-        return self._metadata_dir / Path(Lakh.song_id_to_dir(song_id)).with_suffix(
-            ".h5"
-        )
+        return self._metadata_dir / Path(Lakh.song_id_to_dir(song_id)).with_suffix(".h5")
 
     def get_match_scores(self):
         return self._match_scores
 
     def song_id_to_midi_path(self, song_id: str, midi_md5: str, type: MatchedMidiType):
-        base_dir = (
-            self._matched_data_dir
-            if type == MatchedMidiType.matched
-            else self._aligned_data_dir
-        )
-        return (
-            base_dir
-            / Path(Lakh.song_id_to_dir(song_id))
-            / Path(midi_md5).with_suffix(".mid")
-        )
+        base_dir = self._matched_data_dir if type == MatchedMidiType.matched else self._aligned_data_dir
+        return base_dir / Path(Lakh.song_id_to_dir(song_id)) / Path(midi_md5).with_suffix(".mid")

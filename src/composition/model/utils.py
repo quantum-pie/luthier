@@ -113,9 +113,7 @@ def build_cross_attention_context(
     # Step 1: relative context bar indices
     indices = torch.arange(num_bars, device=device).unsqueeze(1)
     offsets = torch.arange(context_depth, device=device)
-    bar_indices = (
-        indices - context_depth + 1 + offsets
-    )  # shape (num_bars, context_depth)
+    bar_indices = indices - context_depth + 1 + offsets  # shape (num_bars, context_depth)
     bar_indices = bar_indices.clamp(min=0)
 
     # Step 2: Gather per-instrument context and assign inst_ids
@@ -126,14 +124,10 @@ def build_cross_attention_context(
         if inst_id == self_index:
             continue
 
-        gather_idx = bar_indices.unsqueeze(0).expand(
-            B, -1, -1
-        )  # (B, num_bars, context_depth)
+        gather_idx = bar_indices.unsqueeze(0).expand(B, -1, -1)  # (B, num_bars, context_depth)
         gather_idx_exp = gather_idx.unsqueeze(-1).expand(-1, -1, -1, H)
 
-        ctx = torch.gather(
-            bar_summary, dim=1, index=gather_idx_exp
-        )  # (B, num_bars, context_depth, H)
+        ctx = torch.gather(bar_summary, dim=1, index=gather_idx_exp)  # (B, num_bars, context_depth, H)
         context_tensors.append(ctx)
 
         inst_id_tensor = torch.full(
@@ -164,9 +158,7 @@ def prepare_bar_offsets(context_tensor, context_depth):
         Tensor[B, num_bars, ctx_per_bar] with relative bar offsets (0 = most recent)
     """
     B, num_bars, ctx_per_bar, _ = context_tensor.shape
-    offsets = torch.arange(
-        context_depth - 1, -1, -1, device=context_tensor.device
-    )  # e.g. [3, 2, 1, 0]
+    offsets = torch.arange(context_depth - 1, -1, -1, device=context_tensor.device)  # e.g. [3, 2, 1, 0]
 
     # If multiple instruments, repeat offsets per instrument
     n_inst = ctx_per_bar // context_depth
@@ -182,9 +174,7 @@ def gather_token_context(context, token_bar_ids):
     token_bar_ids = token_bar_ids.clamp(0, num_bars - 1)
 
     gather_idx = token_bar_ids.unsqueeze(-1).unsqueeze(-1).expand(-1, -1, ctx, H)
-    return torch.gather(
-        context.unsqueeze(1).expand(-1, T, -1, -1, -1), dim=2, index=gather_idx
-    )  # (B, T, ctx, H)
+    return torch.gather(context.unsqueeze(1).expand(-1, T, -1, -1, -1), dim=2, index=gather_idx)  # (B, T, ctx, H)
 
 
 def gather_token_meta(meta_tensor, token_bar_ids):
@@ -193,6 +183,4 @@ def gather_token_meta(meta_tensor, token_bar_ids):
     token_bar_ids = token_bar_ids.clamp(0, num_bars - 1)
 
     gather_idx = token_bar_ids.unsqueeze(-1).expand(-1, -1, ctx)
-    return torch.gather(
-        meta_tensor.unsqueeze(1).expand(-1, T, -1, -1), dim=2, index=gather_idx
-    )  # (B, T, ctx)
+    return torch.gather(meta_tensor.unsqueeze(1).expand(-1, T, -1, -1), dim=2, index=gather_idx)  # (B, T, ctx)

@@ -38,9 +38,7 @@ class RotaryEmbedding(nn.Module):
         Returns:
             sin, cos: both (batch, seq_len, hidden_dim // 2)
         """
-        angles = torch.einsum(
-            "bs,d -> bsd", positions, self.freqs
-        )  # (B, S, hidden_dim//2)
+        angles = torch.einsum("bs,d -> bsd", positions, self.freqs)  # (B, S, hidden_dim//2)
         return torch.sin(angles), torch.cos(angles)
 
     def get_frequencies(self):
@@ -83,9 +81,7 @@ class DualRotartyEmbedding(nn.Module):
 
         self.linear_emb = LinearRotaryEmbedding(dim=self.linear_dim)
 
-        self.exponential_emb = ExponentialRotaryEmbedding(
-            dim=self.exponential_dim, base=base
-        )
+        self.exponential_emb = ExponentialRotaryEmbedding(dim=self.exponential_dim, base=base)
 
     def forward(self, linear_pos: torch.Tensor, exponential_pos: torch.Tensor):
         """

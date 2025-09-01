@@ -51,15 +51,11 @@ def cli(
         conductor.eval()
 
         with torch.no_grad():
-            output = conductor.forward_step(
-                bar_position=torch.tensor(0, device=device, dtype=torch.float32)
-            )
+            output = conductor.forward_step(bar_position=torch.tensor(0, device=device, dtype=torch.float32))
             instruments_count_rates = output["instrument_counts_rates"]
             instrument_counts = torch.poisson(instruments_count_rates)
 
-            logger.info(
-                f"Tempo (bpm): {TempoNormalizer().unnormalize_bpm(output["tempo"]).item()}"
-            )
+            logger.info(f"Tempo (bpm): {TempoNormalizer().unnormalize_bpm(output["tempo"]).item()}")
 
             for program_id, count in enumerate(instrument_counts):
                 if count > 0:
@@ -67,14 +63,10 @@ def cli(
 
         SEQ_LEN = 256
         time_signature = 4  # 4/4 time
-        instrument_density_logits = torch.zeros(
-            (config["num_instruments"], SEQ_LEN), device=device
-        )
+        instrument_density_logits = torch.zeros((config["num_instruments"], SEQ_LEN), device=device)
         for bar_position in range(1, SEQ_LEN):
             with torch.no_grad():
-                bar_position_torch = torch.tensor(
-                    bar_position * time_signature, device=device, dtype=torch.float32
-                )
+                bar_position_torch = torch.tensor(bar_position * time_signature, device=device, dtype=torch.float32)
                 output = conductor.forward_step(bar_position=bar_position_torch)
                 for program_id, count in enumerate(instrument_counts):
                     if count == 0:
@@ -85,12 +77,8 @@ def cli(
 
         for program_id, count in enumerate(instrument_counts):
             if count > 0:
-                instrument_density_probs = torch.sigmoid(
-                    instrument_density_logits[program_id]
-                )
-                instruments_density = (
-                    torch.round(instrument_density_probs * count).cpu().numpy()
-                )
+                instrument_density_probs = torch.sigmoid(instrument_density_logits[program_id])
+                instruments_density = torch.round(instrument_density_probs * count).cpu().numpy()
                 if all(instruments_density < int(count.item())):
                     logger.info(f"Program ID {program_id} was never activated enough.")
 

@@ -54,10 +54,12 @@ def test_forward_masked_mean_and_fuser_identity():
     # Expected means (embeddings are constant vectors per id)
     # Sample 0: genre mean = mean([2, 6]) = 4.0, mood mean = mean([30, 50]) = 40.0
     # Sample 1: genre mean = mean([1, 10]) = 5.5, mood mean = mean([80]) = 80.0
-    expected = torch.tensor([
-        [4.0] * control_embedding_dim + [40.0] * control_embedding_dim,
-        [5.5] * control_embedding_dim + [80.0] * control_embedding_dim,
-    ])
+    expected = torch.tensor(
+        [
+            [4.0] * control_embedding_dim + [40.0] * control_embedding_dim,
+            [5.5] * control_embedding_dim + [80.0] * control_embedding_dim,
+        ]
+    )
 
     assert torch.allclose(out, expected, atol=1e-6)
 
@@ -83,6 +85,7 @@ def test_encode_default_uses_fuser_on_default_control():
     out = enc.encode_default()
     assert out.shape == (1, latent_dim)
     assert torch.allclose(out.squeeze(0), enc.default_control, atol=1e-6)
+
 
 if __name__ == "__main__":
     sys.exit(pytest.main())

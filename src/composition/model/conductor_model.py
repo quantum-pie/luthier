@@ -36,17 +36,13 @@ class Conductor(nn.Module):
 
         self.hidden_to_latent_proj = nn.Linear(hidden_dim, latent_dim)
 
-        self.control_encoder = ControlEncoder(
-            genre_vocab_size, mood_vocab_size, control_embed_dim, latent_dim
-        )
+        self.control_encoder = ControlEncoder(genre_vocab_size, mood_vocab_size, control_embed_dim, latent_dim)
         self.latent_prior_net = LatentPriorNet(latent_dim)
         self.latent_posterior_net = LatentPosteriorNet(latent_dim)
 
         self.bar_embedding = ExponentialRotaryEmbedding(latent_dim, base=512.0)
 
-        self.tempo_head = nn.Sequential(
-            nn.Linear(latent_dim, latent_dim), nn.ReLU(), nn.Linear(latent_dim, 1)
-        )
+        self.tempo_head = nn.Sequential(nn.Linear(latent_dim, latent_dim), nn.ReLU(), nn.Linear(latent_dim, 1))
 
         self.used_in_piece_head = InstrumentCountHead(
             latent_dim=latent_dim,
@@ -61,9 +57,7 @@ class Conductor(nn.Module):
         )
 
         self.last_control_hash = None
-        self.latent_interpolator = LatentInterpolator(
-            transition_duration=4, smooth=True
-        )
+        self.latent_interpolator = LatentInterpolator(transition_duration=4, smooth=True)
 
     def forward(
         self,
@@ -81,27 +75,19 @@ class Conductor(nn.Module):
             )
         else:
             # If no control tokens, use default control
-            control_embeddings = (
-                self.control_encoder.encode_default()
-            )  # [1, latent_dim]
-            control_embeddings = control_embeddings.repeat(
-                batch_size, 1
-            )  # [B, latent_dim]
+            control_embeddings = self.control_encoder.encode_default()  # [1, latent_dim]
+            control_embeddings = control_embeddings.repeat(batch_size, 1)  # [B, latent_dim]
 
         input_attention_mask = model_inputs["attention_mask"]
 
-        latent_inputs = self.hidden_to_latent_proj(
-            input_embeddings
-        )  # (batch, seq_len, latent_dim)
+        latent_inputs = self.hidden_to_latent_proj(input_embeddings)  # (batch, seq_len, latent_dim)
 
         mu_prior, logvar_prior = self.latent_prior_net(control_embeddings)
         mu_posterior, logvar_posterior = self.latent_posterior_net(
             control_embeddings, latent_inputs, input_attention_mask
         )
 
-        z_sequence = sample_z_sequence_from_tempo_changes(
-            mu_posterior, logvar_posterior, model_inputs["bar_tempos"]
-        )
+        z_sequence = sample_z_sequence_from_tempo_changes(mu_posterior, logvar_posterior, model_inputs["bar_tempos"])
 
         tempos_pred = self.tempo_head(z_sequence).squeeze(-1)
 
@@ -109,16 +95,12 @@ class Conductor(nn.Module):
         instruments_counts_rates = self.used_in_piece_head(z_sequence.mean(dim=1))
 
         # Apply bar embedding to latent vector. The total bar is sequence of unique bars
-        bar_sin, bar_cos = self.bar_embedding(
-            model_inputs["bar_boundaries"]
-        )  # (batch, total_bars, latent_dim)
+        bar_sin, bar_cos = self.bar_embedding(model_inputs["bar_boundaries"])  # (batch, total_bars, latent_dim)
 
         z_bar = apply_rotary(z_sequence, bar_sin, bar_cos)
 
         # Instrumentation density conditioned on bar-modulated latent vector
-        instrument_density_logits = self.density_head(
-            z_bar
-        )  # (batch, total_bars, num_instruments)
+        instrument_density_logits = self.density_head(z_bar)  # (batch, total_bars, num_instruments)
 
         return {
             "tempos": tempos_pred,
@@ -161,10 +143,7 @@ class Conductor(nn.Module):
         control_hash = self.control_hash(control_tokens)
 
         # A single step forward for generation
-        if (
-            not self.latent_interpolator.is_initialized()
-            or self.last_control_hash != control_hash
-        ):
+        if not self.latent_interpolator.is_initialized() or self.last_control_hash != control_hash:
             self.last_control_hash = control_hash
 
             if control_tokens is not None:
@@ -173,14 +152,10 @@ class Conductor(nn.Module):
                 mood_ids = control_tokens["mood_ids"].unsqueeze(0)
                 mood_mask = torch.ones_like(mood_ids, dtype=torch.bool)
 
-                control_embeddings = self.control_encoder(
-                    genre_ids, genre_mask, mood_ids, mood_mask
-                )
+                control_embeddings = self.control_encoder(genre_ids, genre_mask, mood_ids, mood_mask)
             else:
                 # If no control tokens, use default prior
-                control_embeddings = (
-                    self.control_encoder.encode_default()
-                )  # [1, latent_dim]
+                control_embeddings = self.control_encoder.encode_default()  # [1, latent_dim]
 
             mu, logvar = self.latent_prior_net(control_embeddings)
 
@@ -208,7 +183,5 @@ class Conductor(nn.Module):
             "z": z.squeeze(0),
             "tempo": tempo.squeeze(0),
             "instrument_counts_rates": instrument_counts_rates.squeeze(0),
-            "instrument_density_logits": instrument_density_logits.squeeze(0).squeeze(
-                0
-            ),
+            "instrument_density_logits": instrument_density_logits.squeeze(0).squeeze(0),
         }

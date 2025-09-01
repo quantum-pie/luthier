@@ -14,9 +14,7 @@ def tempo_loss(normalized_tempos_pred, normalized_tempos_target):
         FloatTensor of shape [B, T] — tempo loss
     """
     # Compute the L1 loss between predicted and target tempos
-    return F.smooth_l1_loss(
-        normalized_tempos_pred, normalized_tempos_target, reduction="none"
-    )
+    return F.smooth_l1_loss(normalized_tempos_pred, normalized_tempos_target, reduction="none")
 
 
 def generate_tempo_targets(tempos_bpm):

@@ -38,9 +38,7 @@ def test_get_instrument_embedding_shapes_and_values():
     for i in range(program_ids.size(0)):
         for j in range(program_ids.size(1)):
             expected = float(program_ids[i, j].item())
-            assert torch.allclose(
-                inst_embeds[i, j], torch.full((hidden_dim,), expected)
-            )
+            assert torch.allclose(inst_embeds[i, j], torch.full((hidden_dim,), expected))
 
 
 def test_forward_masks_and_gm_vs_drums_switch():

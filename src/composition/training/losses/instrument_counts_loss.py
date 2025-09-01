@@ -41,8 +41,6 @@ def generate_instrument_counts_targets(track_mask, program_ids, num_programs):
 
     # One-hot per valid (batch, program_id) pair
     counts = torch.zeros((B, num_programs), dtype=torch.long, device=program_ids.device)
-    counts.index_add_(
-        0, indices, F.one_hot(prog_ids, num_classes=num_programs).to(torch.long)
-    )
+    counts.index_add_(0, indices, F.one_hot(prog_ids, num_classes=num_programs).to(torch.long))
 
     return counts

@@ -106,12 +106,8 @@ def test_dual_rotarty_embedding_concat_and_getters():
     assert torch.allclose(cos[..., dim // 4 :], exp_cos)
 
     # Getter passthrough
-    assert torch.allclose(
-        dual.get_linear_frequencies(), dual.linear_emb.get_frequencies()
-    )
-    assert torch.allclose(
-        dual.get_exponential_frequencies(), dual.exponential_emb.get_frequencies()
-    )
+    assert torch.allclose(dual.get_linear_frequencies(), dual.linear_emb.get_frequencies())
+    assert torch.allclose(dual.get_exponential_frequencies(), dual.exponential_emb.get_frequencies())
 
 
 if __name__ == "__main__":

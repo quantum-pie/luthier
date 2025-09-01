@@ -15,9 +15,7 @@ class MIDIDatasetLoader(DatasetLoader):
     def __init__(self, config, files, cache_dir):
         self.config = config
         self.filepaths = sorted(files)
-        velocity_quantizer = VelocityQuantizer(
-            velocity_bins=config["vocab"]["velocity_vocab_size"]
-        )
+        velocity_quantizer = VelocityQuantizer(velocity_bins=config["vocab"]["velocity_vocab_size"])
         self.tokenizer = MultiTrackMidiTokenizer(
             velocity_quantizer=velocity_quantizer,
             max_instrument_instances=config["max_instrument_instances"],
