@@ -4,9 +4,7 @@ import torch
 
 
 class InputEmbeddings(nn.Module):
-    def __init__(
-        self, hidden_dim, pitch_vocab_size, velocity_vocab_size, num_instruments
-    ):
+    def __init__(self, hidden_dim, pitch_vocab_size, velocity_vocab_size, num_instruments):
         super().__init__()
         self.gm_embedding = nn.Embedding(pitch_vocab_size, hidden_dim)
         self.drums_embedding = nn.Embedding(pitch_vocab_size, hidden_dim)
@@ -33,9 +31,7 @@ class InputEmbeddings(nn.Module):
 
         B, P, T = pitch_tokens.shape
         D = self.gm_embedding.embedding_dim
-        midi_embeds = torch.empty(
-            B, P, T, D, device=pitch_tokens.device, dtype=self.gm_embedding.weight.dtype
-        )
+        midi_embeds = torch.empty(B, P, T, D, device=pitch_tokens.device, dtype=self.gm_embedding.weight.dtype)
 
         # Non-drums
         gm_mask = ~is_drum
@@ -50,8 +46,6 @@ class InputEmbeddings(nn.Module):
             midi_embeds[dr_mask] = dr_emb
 
         out = midi_embeds + self.velocity_embedding(velocity_tokens)
-        out = out + self.duration_log1p_proj(
-            torch.log1p(note_durations_beats).unsqueeze(-1)
-        )
+        out = out + self.duration_log1p_proj(torch.log1p(note_durations_beats).unsqueeze(-1))
         out = out + self.get_instrument_embedding(program_id).unsqueeze(-2)
         return out * attention_mask.float().unsqueeze(-1)

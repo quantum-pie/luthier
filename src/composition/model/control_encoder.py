@@ -46,9 +46,7 @@ class ControlEncoder(nn.Module):
     ) -> torch.FloatTensor:
         """Return [B, C] masked mean of embeddings along L."""
         # sanity: ensure at least one True per row
-        assert token_mask.any(
-            dim=1
-        ).all(), "Each sample must have at least one valid token."
+        assert token_mask.any(dim=1).all(), "Each sample must have at least one valid token."
 
         emb = embedding(token_ids)  # [B, L, C]
         mask_f = token_mask.unsqueeze(-1).to(emb.dtype)  # [B, L, 1]
@@ -64,9 +62,7 @@ class ControlEncoder(nn.Module):
         mood_mask: torch.BoolTensor,
     ) -> torch.FloatTensor:
         """Returns fused conditioning vector of shape [B, output_dim]."""
-        genre_vec = self._masked_mean(
-            genre_ids, genre_mask, self.genre_embedding
-        )  # [B, C]
+        genre_vec = self._masked_mean(genre_ids, genre_mask, self.genre_embedding)  # [B, C]
         mood_vec = self._masked_mean(mood_ids, mood_mask, self.mood_embedding)  # [B, C]
         fused = torch.cat([genre_vec, mood_vec], dim=-1)  # [B, 2C]
         return self.fuser(fused)  # [B, D]

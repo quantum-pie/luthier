@@ -48,18 +48,14 @@ class LatentInterpolator:
             Tensor: Interpolated latent vector
         """
         if self.z_old is None:
-            raise ValueError(
-                "LatentInterpolator must be initialized with update() before use."
-            )
+            raise ValueError("LatentInterpolator must be initialized with update() before use.")
 
         if self.z_new is None or self.transition_start_bar is None:
             return self.z_old  # No transition happening
 
         # Compute interpolation factor α ∈ [0, 1]
         bar_offset = bar_pos - self.transition_start_bar
-        alpha = torch.clamp(
-            torch.tensor(bar_offset / self.transition_duration), 0.0, 1.0
-        )
+        alpha = torch.clamp(torch.tensor(bar_offset / self.transition_duration), 0.0, 1.0)
 
         if self.smooth:
             alpha = 0.5 * (1 - torch.cos(math.pi * alpha))

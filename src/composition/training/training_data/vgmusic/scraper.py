@@ -44,16 +44,12 @@ def scrape_source(source_url, source_name, dataset_dir):
                 current_game_name = td.get_text(strip=True)
         else:
             a_tag = tr.find("a", href=True)
-            if a_tag and (
-                a_tag["href"].endswith(".mid") or a_tag["href"].endswith(".midi")
-            ):
+            if a_tag and (a_tag["href"].endswith(".mid") or a_tag["href"].endswith(".midi")):
                 file_url = urljoin(source_url, a_tag["href"])
                 filename = os.path.basename(urlparse(file_url).path)
                 song_name = a_tag.get_text(strip=True)
 
-                save_midi_and_metadata(
-                    file_url, filename, current_game_name, song_name, source_folder
-                )
+                save_midi_and_metadata(file_url, filename, current_game_name, song_name, source_folder)
 
 
 def save_midi_and_metadata(file_url, filename, game_name, song_name, folder):
@@ -80,13 +76,9 @@ def save_midi_and_metadata(file_url, filename, game_name, song_name, folder):
             return  # Success
 
         except requests.exceptions.Timeout:
-            logger.warning(
-                f"Timeout downloading {file_url}, attempt {attempt}/{MAX_RETRIES}"
-            )
+            logger.warning(f"Timeout downloading {file_url}, attempt {attempt}/{MAX_RETRIES}")
         except Exception as e:
-            logger.error(
-                f"Error downloading {file_url}: {e}, attempt {attempt}/{MAX_RETRIES}"
-            )
+            logger.error(f"Error downloading {file_url}: {e}, attempt {attempt}/{MAX_RETRIES}")
 
         time.sleep(2)  # Wait a bit before retrying
 

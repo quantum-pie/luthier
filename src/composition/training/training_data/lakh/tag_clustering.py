@@ -40,11 +40,7 @@ class TagClusterer:
 
     def __init__(self, data_dir: Path):
         r = runfiles.Create()
-        config_path = Path(
-            r.Rlocation(
-                "_main/src/composition/training/training_data/lakh/tag_clustering_config.yaml"
-            )
-        )
+        config_path = Path(r.Rlocation("_main/src/composition/training/training_data/lakh/tag_clustering_config.yaml"))
 
         with open(config_path, "r") as f:
             self._config = yaml.safe_load(f)["tag_clustering"]
@@ -56,9 +52,7 @@ class TagClusterer:
         self._tag_clustering_path = data_dir / "clustering.pkl"
         self._tag_clustering = {}
 
-        self._sentence_model = SentenceTransformer(
-            "sentence-transformers/all-MiniLM-L6-v2"
-        )
+        self._sentence_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 
     def calculate_cluster_scores(self, artist_terms, weights):
         cluster_scores = {}
@@ -100,9 +94,7 @@ class TagClusterer:
         cutoff = np.percentile(connectivity, 10)
         valid_indices = np.where(connectivity >= cutoff)[0]
 
-        filtered_cooccurrence = self._cooccurrence_data["tag_cooccurrence"][
-            np.ix_(valid_indices, valid_indices)
-        ]
+        filtered_cooccurrence = self._cooccurrence_data["tag_cooccurrence"][np.ix_(valid_indices, valid_indices)]
 
         # Step 2: Normalize tag co-occurrence vectors
         X_norm = normalize(filtered_cooccurrence.astype(float), norm="l2", axis=1)
@@ -142,9 +134,7 @@ class TagClusterer:
 
             similarities = cosine_similarity([centroid], embeddings)[0]
             ranked_indices = np.argsort(similarities)[::-1]
-            top_tokens = [
-                tag_names[i] for i in ranked_indices[: min(3, len(tag_names))]
-            ]
+            top_tokens = [tag_names[i] for i in ranked_indices[: min(3, len(tag_names))]]
             cluster_name = f"{top_tokens[0]} ({' / '.join(top_tokens[1:])})"
 
             labels_names[int(label)] = cluster_name
@@ -231,9 +221,7 @@ class TagClusterer:
         return -np.sum(probs * np.log(probs)) / np.log(len(distribution))
 
     def classify_songs_into_tag_clusters(self):
-        songs_per_cluster = np.zeros(
-            len(self._tag_clustering["labels_index"]), np.uint32
-        )
+        songs_per_cluster = np.zeros(len(self._tag_clustering["labels_index"]), np.uint32)
         for song_id, matches in tqdm(self._lakh.get_match_scores().items()):
             for md5, score in matches.items():
                 if score < self._config["min_match_score"]:
@@ -244,9 +232,7 @@ class TagClusterer:
                     artist_terms = get_artist_terms(meta)
                     weights = get_artist_terms_freq(meta)
 
-                    cluster_scores = self.calculate_cluster_scores(
-                        artist_terms, weights
-                    )
+                    cluster_scores = self.calculate_cluster_scores(artist_terms, weights)
                     if len(cluster_scores) == 0:
                         continue
 

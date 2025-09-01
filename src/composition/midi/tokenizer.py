@@ -34,9 +34,7 @@ class MultiTrackMidiTokenizer:
             logger.warning("The file has no tempo messages, using default tempo")
             tempo_events = {0: 120.0}  # Default tempo if none is found
 
-        tempo_times, tempi = zip(
-            *sorted(tempo_events.items(), key=lambda item: item[0])
-        )
+        tempo_times, tempi = zip(*sorted(tempo_events.items(), key=lambda item: item[0]))
 
         if tempo_times[0] != 0:
             logger.error("Tempo is not set at the beginning of the file")
@@ -60,24 +58,16 @@ class MultiTrackMidiTokenizer:
             for msg in track:
                 abs_tick += msg.time
                 if msg.type == "time_signature":
-                    if not MultiTrackMidiTokenizer.validate_time_signature(
-                        msg.numerator, msg.denominator
-                    ):
-                        logger.error(
-                            f"Invalid time signature: {msg.numerator}/{msg.denominator}"
-                        )
+                    if not MultiTrackMidiTokenizer.validate_time_signature(msg.numerator, msg.denominator):
+                        logger.error(f"Invalid time signature: {msg.numerator}/{msg.denominator}")
                         return None, None
                     time_sigs[abs_tick] = (msg.numerator, msg.denominator)
 
         if len(time_sigs) == 0:
-            logger.warning(
-                "The file has no time signature messages, using default time signature"
-            )
+            logger.warning("The file has no time signature messages, using default time signature")
             time_sigs = {0: (4, 4)}  # Default time signature if none is found
 
-        ts_times, time_signatures = zip(
-            *sorted(time_sigs.items(), key=lambda item: item[0])
-        )
+        ts_times, time_signatures = zip(*sorted(time_sigs.items(), key=lambda item: item[0]))
 
         if ts_times[0] != 0:
             logger.error("Time signature is not set at the beginning of the file")
@@ -90,12 +80,8 @@ class MultiTrackMidiTokenizer:
         return list(range(first_tick, last_tick, ticks_per_beat))
 
     @staticmethod
-    def compute_bar_boundaries_from_beats(
-        beat_ticks, ts_times, ts_signatures, ticks_per_beat
-    ):
-        assert len(ts_times) == len(
-            ts_signatures
-        ), "Time signature and time list must match"
+    def compute_bar_boundaries_from_beats(beat_ticks, ts_times, ts_signatures, ticks_per_beat):
+        assert len(ts_times) == len(ts_signatures), "Time signature and time list must match"
         if not beat_ticks:
             return []
 
@@ -105,15 +91,11 @@ class MultiTrackMidiTokenizer:
 
         while current_tick <= beat_ticks[-1]:
             # Update time signature if needed
-            while (
-                ts_index + 1 < len(ts_times) and current_tick >= ts_times[ts_index + 1]
-            ):
+            while ts_index + 1 < len(ts_times) and current_tick >= ts_times[ts_index + 1]:
                 ts_index += 1
 
             numerator, denominator = ts_signatures[ts_index]
-            beats_per_bar = (
-                Fraction(numerator, denominator) * 4
-            )  # quarter note equivalents
+            beats_per_bar = Fraction(numerator, denominator) * 4  # quarter note equivalents
             bar_duration_ticks = beats_per_bar * ticks_per_beat
 
             bar_boundaries.append(int(current_tick))
@@ -160,9 +142,7 @@ class MultiTrackMidiTokenizer:
             logger.error(f"Invalid ticks per beat in MIDI file {midi_file_path}")
             return None
 
-        all_msg_ticks = [
-            msg.time for track in mid.tracks for msg in track if hasattr(msg, "time")
-        ]
+        all_msg_ticks = [msg.time for track in mid.tracks for msg in track if hasattr(msg, "time")]
 
         if not all_msg_ticks:
             logger.error(f"No messages with time found in MIDI file {midi_file_path}")
@@ -185,9 +165,7 @@ class MultiTrackMidiTokenizer:
         for track in mid.tracks:
             abs_tick = 0
             note_stack = defaultdict(lambda: defaultdict(list))
-            program_by_channel = {
-                i: 0 for i in range(16)
-            }  # Default program for each channel
+            program_by_channel = {i: 0 for i in range(16)}  # Default program for each channel
             program_by_channel[9] = DRUMS_PROGRAM_ID  # Drums channel
             for msg in track:
                 abs_tick += msg.time
@@ -196,9 +174,7 @@ class MultiTrackMidiTokenizer:
                 elif msg.type == "note_on" and msg.velocity > 0:
                     stack_group = msg.channel
                     note_stack[stack_group][msg.note].append((abs_tick, msg.velocity))
-                elif msg.type == "note_off" or (
-                    msg.type == "note_on" and msg.velocity == 0
-                ):
+                elif msg.type == "note_off" or (msg.type == "note_on" and msg.velocity == 0):
                     if msg.channel not in program_by_channel:
                         logger.error("Program is not set for channel!")
                         return None
@@ -208,32 +184,16 @@ class MultiTrackMidiTokenizer:
 
                     stack_group = msg.channel
 
-                    if (
-                        msg.note in note_stack[stack_group]
-                        and note_stack[stack_group][msg.note]
-                    ):
-                        notes_to_close = [
-                            note
-                            for note in note_stack[stack_group][msg.note]
-                            if note[0] != abs_tick
-                        ]
-
-                        notes_to_keep = [
-                            note
-                            for note in note_stack[stack_group][msg.note]
-                            if note[0] == abs_tick
-                        ]
+                    if msg.note in note_stack[stack_group] and note_stack[stack_group][msg.note]:
+                        notes_to_close = [note for note in note_stack[stack_group][msg.note] if note[0] != abs_tick]
+                        notes_to_keep = [note for note in note_stack[stack_group][msg.note] if note[0] == abs_tick]
 
                         for start_time, velocity in notes_to_close:
-                            notes_by_group[group].append(
-                                (msg.note, velocity, start_time, abs_tick)
-                            )
+                            notes_by_group[group].append((msg.note, velocity, start_time, abs_tick))
 
                         note_stack[stack_group][msg.note] = notes_to_keep
 
-        notes_by_track = [
-            (program, notes) for (_, program), notes in notes_by_group.items() if notes
-        ]
+        notes_by_track = [(program, notes) for (_, program), notes in notes_by_group.items() if notes]
 
         if not notes_by_track:
             logger.warning("No notes found in the MIDI file")
@@ -246,19 +206,14 @@ class MultiTrackMidiTokenizer:
 
         latest_ts = max([all_note_ends[-1], tempo_times[-1], ts_times[-1]])
 
-        beats = MultiTrackMidiTokenizer.generate_beat_ticks(
-            0, latest_ts + mid.ticks_per_beat, mid.ticks_per_beat
-        )
+        beats = MultiTrackMidiTokenizer.generate_beat_ticks(0, latest_ts + mid.ticks_per_beat, mid.ticks_per_beat)
 
         bar_boundaries = MultiTrackMidiTokenizer.compute_bar_boundaries_from_beats(
             beats, ts_times, time_signatures, mid.ticks_per_beat
         )
 
         # data on a fixed per-bar grid for latent network
-        tempos_on_bars = [
-            MultiTrackMidiTokenizer.tempo_at_time(tempo_times, tempi, beat)
-            for beat in bar_boundaries
-        ]
+        tempos_on_bars = [MultiTrackMidiTokenizer.tempo_at_time(tempo_times, tempi, beat) for beat in bar_boundaries]
 
         track_grouped_data = []
         same_program_id_counts = defaultdict(int)
@@ -272,9 +227,7 @@ class MultiTrackMidiTokenizer:
 
             new_data_list = []
 
-            bar_activations = [False] * len(
-                bar_boundaries
-            )  # Initialize list of booleans
+            bar_activations = [False] * len(bar_boundaries)  # Initialize list of booleans
             for note in notes:
                 start_ticks = note[2]
                 start_beats = start_ticks / mid.ticks_per_beat
@@ -283,10 +236,8 @@ class MultiTrackMidiTokenizer:
 
                 duration_beats = end_beats - start_beats
 
-                bar_position, within_bar_position = (
-                    MultiTrackMidiTokenizer.bar_position_from_tick(
-                        bar_boundaries, start_ticks
-                    )
+                bar_position, within_bar_position = MultiTrackMidiTokenizer.bar_position_from_tick(
+                    bar_boundaries, start_ticks
                 )
 
                 velocity_bin = self.velocity_quantizer.quantize(note[1])
@@ -319,21 +270,15 @@ class MultiTrackMidiTokenizer:
                 "velocity_tokens": [d["velocity_token"] for d in new_data_list],
                 "beat_positions": [d["beat_position"] for d in new_data_list],
                 "bar_positions": [d["bar_position"] for d in new_data_list],
-                "within_bar_positions": [
-                    d["within_bar_position"] for d in new_data_list
-                ],
-                "note_durations_beats": [
-                    d["note_duration_beats"] for d in new_data_list
-                ],
+                "within_bar_positions": [d["within_bar_position"] for d in new_data_list],
+                "note_durations_beats": [d["note_duration_beats"] for d in new_data_list],
                 "bar_activations": bar_activations,
             }
 
             # sort by beat_position here
             track_grouped_data.append(new_data)
 
-        logger.debug(
-            f"Encoded {len(track_grouped_data)} tracks from MIDI file: {midi_file_path}"
-        )
+        logger.debug(f"Encoded {len(track_grouped_data)} tracks from MIDI file: {midi_file_path}")
 
         return {
             "tracks": track_grouped_data,

@@ -26,9 +26,7 @@ class VelocityQuantizer:
         elif velocity >= MIDI_VELOCITY_VOCAB_SIZE:
             return self._velocity_bins - 1
         else:
-            return round(
-                (velocity / (MIDI_VELOCITY_VOCAB_SIZE - 1)) * (self._velocity_bins - 1)
-            )
+            return round((velocity / (MIDI_VELOCITY_VOCAB_SIZE - 1)) * (self._velocity_bins - 1))
 
     def velocity_bins(self) -> int:
         """
@@ -39,6 +37,4 @@ class VelocityQuantizer:
         return self._velocity_bins
 
     def velocity_bin_to_velocity(self, velocity_bin: int) -> int:
-        return round(
-            (velocity_bin / (self._velocity_bins - 1)) * (MIDI_VELOCITY_VOCAB_SIZE - 1)
-        )
+        return round((velocity_bin / (self._velocity_bins - 1)) * (MIDI_VELOCITY_VOCAB_SIZE - 1))

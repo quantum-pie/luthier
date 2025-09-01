@@ -14,15 +14,9 @@ def test_collate_fn():
     r = runfiles.Create()
 
     test_file_paths = [
-        pathlib.Path(
-            r.Rlocation(
-                "_main/datasets/lakh/lmd_full/e/e5aeb1a3772e73b86c47542b9c5063b3.mid"
-            )
-        ),
+        pathlib.Path(r.Rlocation("_main/datasets/lakh/lmd_full/e/e5aeb1a3772e73b86c47542b9c5063b3.mid")),
         pathlib.Path(r.Rlocation("_main/datasets/vgmusic/xbox360/Elises_Tears.mid")),
-        pathlib.Path(
-            r.Rlocation("_main/datasets/vgmusic/xbox360/Dreams_of_an_Absolution.mid")
-        ),
+        pathlib.Path(r.Rlocation("_main/datasets/vgmusic/xbox360/Dreams_of_an_Absolution.mid")),
         pathlib.Path(r.Rlocation("_main/datasets/vgmusic/xbox360/halotheme.mid")),
         pathlib.Path(r.Rlocation("_main/datasets/vgmusic/xbox360/His_World_Remix.mid")),
     ]
@@ -30,9 +24,7 @@ def test_collate_fn():
     velocity_bins = 128
 
     velocity_quantizer = VelocityQuantizer(velocity_bins=velocity_bins)
-    tokenizer = MultiTrackMidiTokenizer(
-        velocity_quantizer=velocity_quantizer, max_instrument_instances=10
-    )
+    tokenizer = MultiTrackMidiTokenizer(velocity_quantizer=velocity_quantizer, max_instrument_instances=10)
 
     input_and_control_batch = []
     max_tracks = 0
@@ -58,45 +50,32 @@ def test_collate_fn():
         max_tracks,
         MAX_SEQ_LEN,
     ), "Pitch tokens shape mismatch"
-    assert (
-        model_input["velocity_tokens"].shape == model_input["pitch_tokens"].shape
-    ), "Velocity tokens shape mismatch"
-    assert (
-        model_input["beat_positions"].shape == model_input["pitch_tokens"].shape
-    ), "Beat positions shape mismatch"
-    assert (
-        model_input["bar_positions"].shape == model_input["pitch_tokens"].shape
-    ), "Bar positions shape mismatch"
+    assert model_input["velocity_tokens"].shape == model_input["pitch_tokens"].shape, "Velocity tokens shape mismatch"
+    assert model_input["beat_positions"].shape == model_input["pitch_tokens"].shape, "Beat positions shape mismatch"
+    assert model_input["bar_positions"].shape == model_input["pitch_tokens"].shape, "Bar positions shape mismatch"
     assert (
         model_input["within_bar_positions"].shape == model_input["pitch_tokens"].shape
     ), "Within bar positions shape mismatch"
     assert (
         model_input["note_durations_beats"].shape == model_input["pitch_tokens"].shape
     ), "Note durations beats shape mismatch"
-    assert (
-        model_input["attention_mask"].shape == model_input["pitch_tokens"].shape
-    ), "Attention mask shape mismatch"
+    assert model_input["attention_mask"].shape == model_input["pitch_tokens"].shape, "Attention mask shape mismatch"
 
     # Per-song per-track scalars
     assert model_input["track_mask"].shape == (
         len(test_file_paths),
         max_tracks,
     ), "Track mask shape mismatch"
-    assert (
-        model_input["program_ids"].shape == model_input["track_mask"].shape
-    ), "Program IDs shape mismatch"
+    assert model_input["program_ids"].shape == model_input["track_mask"].shape, "Program IDs shape mismatch"
 
     # Per-song sequences
     assert model_input["bar_boundaries"].shape == (
         len(test_file_paths),
         MAX_BARS,
     ), "Bar boundaries shape mismatch"
+    assert model_input["bar_tempos"].shape == model_input["bar_boundaries"].shape, "Bar tempos shape mismatch"
     assert (
-        model_input["bar_tempos"].shape == model_input["bar_boundaries"].shape
-    ), "Bar tempos shape mismatch"
-    assert (
-        model_input["global_attention_mask"].shape
-        == model_input["bar_boundaries"].shape
+        model_input["global_attention_mask"].shape == model_input["bar_boundaries"].shape
     ), "Global attention mask shape mismatch"
 
     for i in range(len(test_file_paths)):
@@ -153,41 +132,32 @@ def test_collate_fn():
             ), f"Program ID mismatch for song {i}, track {track_idx}"
 
             idx = bisect.bisect_left(track["bar_positions"], bar_boundaries_length)
-            track_tokens_length = min(
-                min(len(track["bar_positions"]), MAX_SEQ_LEN), idx
-            )
+            track_tokens_length = min(min(len(track["bar_positions"]), MAX_SEQ_LEN), idx)
             assert (
                 model_input_i["pitch_tokens"][track_idx][:track_tokens_length].numpy()
                 == track["pitch_tokens"][:track_tokens_length]
             ).all(), f"Pitch tokens mismatch for song {i}, track {track_idx}"
 
             assert (
-                model_input_i["pitch_tokens"][track_idx][track_tokens_length:]
-                == PAD_VALUE
+                model_input_i["pitch_tokens"][track_idx][track_tokens_length:] == PAD_VALUE
             ).all(), f"Pitch tokens padding mismatch for song {i}, track {track_idx}"
 
             assert (
-                model_input_i["velocity_tokens"][track_idx][
-                    :track_tokens_length
-                ].numpy()
+                model_input_i["velocity_tokens"][track_idx][:track_tokens_length].numpy()
                 == track["velocity_tokens"][:track_tokens_length]
             ).all(), f"Velocity tokens mismatch for song {i}, track {track_idx}"
 
             assert (
-                model_input_i["velocity_tokens"][track_idx][track_tokens_length:]
-                == PAD_VALUE
+                model_input_i["velocity_tokens"][track_idx][track_tokens_length:] == PAD_VALUE
             ).all(), f"Velocity tokens padding mismatch for song {i}, track {track_idx}"
 
             assert np.allclose(
-                model_input_i["beat_positions"][track_idx][
-                    :track_tokens_length
-                ].numpy(),
+                model_input_i["beat_positions"][track_idx][:track_tokens_length].numpy(),
                 track["beat_positions"][:track_tokens_length],
             ), f"Beat positions mismatch for song {i}, track {track_idx}"
 
             assert (
-                model_input_i["beat_positions"][track_idx][track_tokens_length:]
-                == PAD_VALUE
+                model_input_i["beat_positions"][track_idx][track_tokens_length:] == PAD_VALUE
             ).all(), f"Beat positions padding mismatch for song {i}, track {track_idx}"
 
             assert (
@@ -196,58 +166,42 @@ def test_collate_fn():
             ).all(), f"Bar positions mismatch for song {i}, track {track_idx}"
 
             assert (
-                model_input_i["bar_positions"][track_idx][track_tokens_length:]
-                == PAD_VALUE
+                model_input_i["bar_positions"][track_idx][track_tokens_length:] == PAD_VALUE
             ).all(), f"Bar positions padding mismatch for song {i}, track {track_idx}"
 
             assert np.allclose(
-                model_input_i["within_bar_positions"][track_idx][
-                    :track_tokens_length
-                ].numpy(),
+                model_input_i["within_bar_positions"][track_idx][:track_tokens_length].numpy(),
                 track["within_bar_positions"][:track_tokens_length],
             ), f"Within bar positions mismatch for song {i}, track {track_idx}"
 
             assert (
-                model_input_i["within_bar_positions"][track_idx][track_tokens_length:]
-                == PAD_VALUE
-            ).all(), (
-                f"Within bar positions padding mismatch for song {i}, track {track_idx}"
-            )
+                model_input_i["within_bar_positions"][track_idx][track_tokens_length:] == PAD_VALUE
+            ).all(), f"Within bar positions padding mismatch for song {i}, track {track_idx}"
 
             assert np.allclose(
-                model_input_i["note_durations_beats"][track_idx][
-                    :track_tokens_length
-                ].numpy(),
+                model_input_i["note_durations_beats"][track_idx][:track_tokens_length].numpy(),
                 track["note_durations_beats"][:track_tokens_length],
             ), f"Note durations beats mismatch for song {i}, track {track_idx}"
 
             assert (
-                model_input_i["note_durations_beats"][track_idx][track_tokens_length:]
-                == PAD_VALUE
-            ).all(), (
-                f"Note durations beats padding mismatch for song {i}, track {track_idx}"
-            )
+                model_input_i["note_durations_beats"][track_idx][track_tokens_length:] == PAD_VALUE
+            ).all(), f"Note durations beats padding mismatch for song {i}, track {track_idx}"
 
             assert (
-                model_input_i["attention_mask"][track_idx][:track_tokens_length].numpy()
-                == 1
+                model_input_i["attention_mask"][track_idx][:track_tokens_length].numpy() == 1
             ).all(), f"Attention mask mismatch for song {i}, track {track_idx}"
 
             assert (
-                model_input_i["attention_mask"][track_idx][track_tokens_length:]
-                == PAD_VALUE
+                model_input_i["attention_mask"][track_idx][track_tokens_length:] == PAD_VALUE
             ).all(), f"Attention mask padding mismatch for song {i}, track {track_idx}"
 
             assert (
-                model_input_i["bar_activations"][track_idx][
-                    :bar_boundaries_length
-                ].numpy()
+                model_input_i["bar_activations"][track_idx][:bar_boundaries_length].numpy()
                 == track["bar_activations"][:bar_boundaries_length]
             ).all(), f"Bar activations mismatch for song {i}, track {track_idx}"
 
             assert (
-                model_input_i["bar_activations"][track_idx][bar_boundaries_length:]
-                == PAD_VALUE
+                model_input_i["bar_activations"][track_idx][bar_boundaries_length:] == PAD_VALUE
             ).all(), f"Bar activations padding mismatch for song {i}, track {track_idx}"
 
 

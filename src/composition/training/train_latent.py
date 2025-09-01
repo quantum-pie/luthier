@@ -41,8 +41,6 @@ from src.composition.training.dataset_resolver import get_dataset_files
 import click
 from tqdm import tqdm
 
-import numpy as np
-
 from src.composition.game_genres import GameGenres
 from src.composition.game_moods import GameMoods
 
@@ -59,12 +57,8 @@ def kl_anneal_weight(step, beta_max, warmup_steps, total_steps):
 
 
 @click.command()
-@click.option(
-    "--use-supervised", is_flag=True, help="Use supervised dataset for training"
-)
-@click.option(
-    "--use-unsupervised", is_flag=True, help="Use unsupervised dataset for training"
-)
+@click.option("--use-supervised", is_flag=True, help="Use supervised dataset for training")
+@click.option("--use-unsupervised", is_flag=True, help="Use unsupervised dataset for training")
 @click.option(
     "--output-dir",
     required=True,
@@ -83,20 +77,14 @@ def cli(
     dataset_cache_dir=None,
 ):
     if use_supervised and use_unsupervised:
-        raise ValueError(
-            "Cannot use both supervised and unsupervised datasets at the same time."
-        )
+        raise ValueError("Cannot use both supervised and unsupervised datasets at the same time.")
 
     if not use_supervised and not use_unsupervised:
-        raise ValueError(
-            "You must specify either --use-supervised or --use-unsupervised."
-        )
+        raise ValueError("You must specify either --use-supervised or --use-unsupervised.")
 
     r = runfiles.Create()
 
-    training_config = load_config(
-        "_main/src/composition/training/config/latent_pretrain.yaml", r
-    )
+    training_config = load_config("_main/src/composition/training/config/latent_pretrain.yaml", r)
 
     device = training_config["device"]
     if device == "cuda" and not torch.cuda.is_available():
@@ -189,12 +177,8 @@ def cli(
                     outputs = conductor_model(inputs, input_embeddings)
                 else:
                     control_tokens = inputs_and_control["control"]
-                    assert (
-                        control_tokens is not None
-                    ), "Control tokens must be provided for supervised training."
-                    control_tokens = {
-                        k: v.to(device) for k, v in control_tokens.items()
-                    }
+                    assert control_tokens is not None, "Control tokens must be provided for supervised training."
+                    control_tokens = {k: v.to(device) for k, v in control_tokens.items()}
                     outputs = conductor_model(inputs, input_embeddings, control_tokens)
 
                 pred_tempos = outputs["tempos"]
@@ -208,9 +192,7 @@ def cli(
 
                 with torch.no_grad():
                     # Generate targets
-                    target_tempos = generate_tempo_targets(inputs["bar_tempos"]).to(
-                        device
-                    )
+                    target_tempos = generate_tempo_targets(inputs["bar_tempos"]).to(device)
 
                     target_instrument_counts = generate_instrument_counts_targets(
                         inputs["track_mask"],
@@ -228,17 +210,13 @@ def cli(
 
                 # Compute losses
                 tempo_loss_array = tempo_loss(pred_tempos, target_tempos)
-                tempo_loss_value = tempo_loss_array[
-                    inputs["global_attention_mask"]
-                ].mean()
+                tempo_loss_value = tempo_loss_array[inputs["global_attention_mask"]].mean()
 
                 instrument_counts_loss_value = instrument_counts_loss(
                     pred_instrument_counts_rates, target_instrument_counts
                 ).mean()
 
-                full_mask = inputs["global_attention_mask"].unsqueeze(-1) & (
-                    target_instrument_counts > 0
-                ).unsqueeze(
+                full_mask = inputs["global_attention_mask"].unsqueeze(-1) & (target_instrument_counts > 0).unsqueeze(
                     1
                 )  # [B, T, P]
 
@@ -248,9 +226,7 @@ def cli(
                     target_instrument_counts,
                 )[full_mask].mean()
 
-                latent_loss = kl_loss(
-                    mu_posterior, logvar_posterior, mu_prior, logvar_prior
-                ).mean()
+                latent_loss = kl_loss(mu_posterior, logvar_posterior, mu_prior, logvar_prior).mean()
 
                 step_idx = epoch * len(dataloader) + i
 
@@ -263,10 +239,7 @@ def cli(
 
                 # Combine losses
                 loss = (
-                    tempo_loss_value
-                    + instrument_counts_loss_value
-                    + instrument_density_loss_value
-                    + beta * latent_loss
+                    tempo_loss_value + instrument_counts_loss_value + instrument_density_loss_value + beta * latent_loss
                 )
 
                 loss.backward()
@@ -291,9 +264,7 @@ def cli(
                 writer.add_scalar("KL divergence Loss", latent_loss.item(), step_idx)
                 writer.add_scalar("Total Loss", loss.item(), step_idx)
 
-                logger.info(
-                    f"Batch {i + 1}/{len(dataloader)} processed. Total loss: {total_loss / (i + 1)}"
-                )
+                logger.info(f"Batch {i + 1}/{len(dataloader)} processed. Total loss: {total_loss / (i + 1)}")
 
             torch.save(
                 {

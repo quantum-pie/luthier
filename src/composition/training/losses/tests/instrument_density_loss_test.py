@@ -46,18 +46,14 @@ def test_generate_instrument_density_targets_case_1():
     )
 
     assert targets.shape == (2, max_global_len, num_programs)
-    assert torch.equal(
-        targets, expected_targets
-    ), "Generated targets do not match expected values"
+    assert torch.equal(targets, expected_targets), "Generated targets do not match expected values"
 
 
 def test_generate_instrument_density_targets_case_2():
     num_programs = 4
     max_global_len = 4
 
-    track_mask = torch.tensor(
-        [[True, True, True, False], [True, True, True, True]]  # Batch 0  # Batch 1
-    )
+    track_mask = torch.tensor([[True, True, True, False], [True, True, True, True]])  # Batch 0  # Batch 1
 
     program_ids = torch.tensor(
         [
@@ -109,9 +105,7 @@ def test_generate_instrument_density_targets_case_2():
 
     # Check
     assert targets.shape == expected_targets.shape
-    assert torch.equal(
-        targets, expected_targets
-    ), "Test case 2 failed: Targets don't match expected output."
+    assert torch.equal(targets, expected_targets), "Test case 2 failed: Targets don't match expected output."
 
 
 def test_instrument_density_loss():
@@ -132,17 +126,11 @@ def test_instrument_density_loss():
     instrument_counts[0, 1] = 1
 
     # simple mapping because targets are strictly boolean
-    logits = (
-        expected_targets.float() / instrument_counts.unsqueeze(1).float() - 0.5
-    ) * 30.0
+    logits = (expected_targets.float() / instrument_counts.unsqueeze(1).float() - 0.5) * 30.0
 
-    loss = instrument_density_loss(
-        logits, expected_targets.float(), instrument_counts
-    ).mean()
+    loss = instrument_density_loss(logits, expected_targets.float(), instrument_counts).mean()
 
-    assert (
-        torch.abs(loss) < 1e-5
-    ), "Loss should be close to zero for perfect predictions"
+    assert torch.abs(loss) < 1e-5, "Loss should be close to zero for perfect predictions"
 
     # less expected density while keeping logits -> higher loss
     expected_targets_lower_density = expected_targets

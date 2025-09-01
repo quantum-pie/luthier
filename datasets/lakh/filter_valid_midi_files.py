@@ -13,7 +13,7 @@ TIMEOUT = 1  # seconds for each MIDI file to be processed
 
 def load_midi(path):
     try:
-        midi = mido.MidiFile(path)
+        mido.MidiFile(path)
         return (path, "mido", None)
     except Exception as e:
         return (path, None, str(e))
@@ -26,9 +26,7 @@ def validate_all_parallel(paths, max_workers=8):
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         futures = {executor.submit(load_midi, path): path for path in paths}
 
-        for future in tqdm(
-            as_completed(futures), total=len(futures), desc="Validating MIDI files"
-        ):
+        for future in tqdm(as_completed(futures), total=len(futures), desc="Validating MIDI files"):
             path = futures[future]
             try:
                 result = future.result(timeout=TIMEOUT)
@@ -55,9 +53,7 @@ def filter_valid_midi_files(output_manifest):
 
     input_manifest = r.Rlocation("_main/datasets/lakh/lmd_full_manifest.txt")
     with open(input_manifest) as f:
-        all_paths = [
-            r.Rlocation(f"_main/{rel_path}") for rel_path in f.read().splitlines()
-        ]
+        all_paths = [r.Rlocation(f"_main/{rel_path}") for rel_path in f.read().splitlines()]
 
     valid_paths, error_log = validate_all_parallel(all_paths)
 

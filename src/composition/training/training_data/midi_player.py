@@ -23,9 +23,7 @@ class MidiPlayer:
             return
 
         if sys.platform.startswith("win"):
-            subprocess.call(
-                ["taskkill", "/F", "/T", "/PID", str(self.player_process.pid)]
-            )
+            subprocess.call(["taskkill", "/F", "/T", "/PID", str(self.player_process.pid)])
         else:
             self.player_process.kill()
 
