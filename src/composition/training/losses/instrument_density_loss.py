@@ -25,10 +25,6 @@ def instrument_density_loss(pred_logits, taget_instrument_density, instrument_co
     k = taget_instrument_density  # [B, T, P]
     q = torch.sigmoid(pred_logits)  # [B, T, P]
 
-    print("n: ", n)
-    print("k: ", k)
-    print("q: ", q)
-
     log_binom = gammaln(n + 1) - gammaln(k + 1) - gammaln(n - k + 1)
     return -(log_binom + k * torch.log(q) + (n - k) * torch.log1p(-q))
 
