@@ -149,6 +149,23 @@ py_test(
     ],
 )
 
+py_test(
+    name = "latent_interpolator_test",
+    timeout = "short",
+    srcs = ["tests/latent_interpolator_test.py"],
+    data = [
+        "//third_party/pytorch_cuda_libs:cuda_so_files",
+    ],
+    env = {
+        "LD_LIBRARY_PATH": "third_party/pytorch_cuda_libs/lib",
+    },
+    deps = [
+        ":latent_interpolator",
+        "@pypi//pytest",
+        "@pypi//torch",
+    ],
+)
+
 # py_library(
 #     name = "model",
 #     srcs = ["model.py"],
