@@ -33,6 +33,7 @@ py_binary(
         "//src/composition/training/config",
         "//src/composition/training/losses:instrument_counts_loss",
         "//src/composition/training/losses:instrument_density_loss",
+        "//src/composition/training/losses:latent_loss",
         "//src/composition/training/losses:tempo_loss",
         "//src/composition/training/training_data/dataloader:midi_dataset_loader",
         "//src/composition/training/training_data/dataloader:utils",
