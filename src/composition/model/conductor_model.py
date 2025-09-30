@@ -91,8 +91,13 @@ class Conductor(nn.Module):
 
         tempos_pred = self.tempo_head(z_sequence).squeeze(-1)
 
+        global_attention_mask = model_inputs["global_attention_mask"]
+        z_bar_mean = (z_sequence * global_attention_mask.unsqueeze(-1)).sum(dim=1) / global_attention_mask.sum(
+            dim=1, keepdim=True
+        )
+
         # Infer used instruments
-        instruments_counts_rates = self.used_in_piece_head(z_sequence.mean(dim=1))
+        instruments_counts_rates = self.used_in_piece_head(z_bar_mean)
 
         # Apply bar embedding to latent vector. The total bar is sequence of unique bars
         bar_sin, bar_cos = self.bar_embedding(model_inputs["bar_boundaries"])  # (batch, total_bars, latent_dim)
