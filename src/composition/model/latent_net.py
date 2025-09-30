@@ -3,7 +3,7 @@ import torch
 
 
 def masked_global_mean(x, mask, eps=1e-6):
-    # x: [B,P,T,D], mask: [B,P] (bool),
+    # x: [B,P,T,D], mask: [B,P,T] (bool),
     m = mask.float()
     num = (x * m.unsqueeze(-1)).sum(dim=(1, 2))  # [B,D]
     den = m.sum(dim=(1, 2)).clamp_min(eps).unsqueeze(-1)  # [B,1]

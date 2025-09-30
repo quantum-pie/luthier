@@ -21,12 +21,13 @@ def instrument_density_loss(pred_logits, taget_instrument_density, instrument_co
         Loss tensor of shape [B, T, P] (not reduced)
     """
     B, T, P = pred_logits.shape
-    n = instrument_counts.unsqueeze(1).expand(B, T, P)  # [B, T, P]
-    k = taget_instrument_density  # [B, T, P]
-    q = torch.sigmoid(pred_logits)  # [B, T, P]
+    n = instrument_counts.unsqueeze(1).expand(B, T, P).to(pred_logits.dtype)  # [B, T, P]
+    k = taget_instrument_density.to(pred_logits.dtype)  # [B, T, P]
+    log_q = -F.softplus(-pred_logits)
+    log1m_q = -F.softplus(pred_logits)
 
     log_binom = gammaln(n + 1) - gammaln(k + 1) - gammaln(n - k + 1)
-    return -(log_binom + k * torch.log(q) + (n - k) * torch.log1p(-q))
+    return -(log_binom + k * log_q + (n - k) * log1m_q)
 
 
 def generate_instrument_density_targets(

@@ -1,7 +1,7 @@
 import torch
 
 
-def sample_z_sequence_from_tempo_changes(mu, logvar, tempos, threshold=1e-2):
+def sample_z_sequence_from_tempo_changes(mu, logvar, tempos, threshold=1.0):
     """
     Resample z from same (mu, logvar) every time tempo changes (abruptly).
 
